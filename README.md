@@ -67,19 +67,17 @@ const addresses = await client.depositAddresses.list();
 const deposits = await client.deposits.list();
 ```
 
-### Withdrawals
+### Assets
 
 ```typescript
-// Create
-const withdrawal = await client.withdrawals.create({
-  asset: 'USDT',
-  network: 'bsc',
-  amount: 100,
-  address: '0x...',
-});
+// List available assets
+const { assets } = await client.assets.list();
 
-// List
-const withdrawals = await client.withdrawals.list();
+// Example response:
+// [
+//   { symbol: 'USDT', name: 'Tether USD', iconUrl: '...', networks: [{ code: 'ethereum', name: 'Ethereum' }, ...] },
+//   { symbol: 'BTC', name: 'Bitcoin', iconUrl: '...', networks: [{ code: 'bitcoin', name: 'Bitcoin' }] },
+// ]
 ```
 
 ## Webhook Verification

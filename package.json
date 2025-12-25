@@ -23,6 +23,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "generate": "openapi-typescript https://paycoinpro.com/api/openapi -o src/types/openapi.ts",
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
@@ -66,6 +67,8 @@
     "@vitest/coverage-v8": "^1.0.0",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
+    "openapi-fetch": "^0.15.0",
+    "openapi-typescript": "^7.10.1",
     "prettier": "^3.1.0",
     "tsup": "^8.0.0",
     "typescript": "^5.3.0",

@@ -31,12 +31,12 @@ export class APIClient {
     this._fetch = options.fetch ?? globalThis.fetch;
   }
 
-  async get<T, P extends object = Record<string, unknown>>(
+  async get<T>(
     path: string,
-    params?: P,
+    params?: Record<string, unknown>,
     options?: RequestOptions
   ): Promise<T> {
-    return this.request<T>('GET', path, undefined, params as Record<string, unknown>, options);
+    return this.request<T>('GET', path, undefined, params, options);
   }
 
   async post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {

@@ -1,32 +1,48 @@
 /**
  * PayCoinPro Node.js SDK
+ *
+ * Types are auto-generated from OpenAPI spec.
+ * Run `npm run generate` to update types.
  */
 
 export { PayCoinPro, PayCoinPro as default } from './client.js';
 
+// SDK Configuration
+export type { PayCoinProOptions, RequestOptions } from './types/index.js';
+
+// API Types (auto-generated from OpenAPI)
 export type {
-  PayCoinProOptions,
-  RequestOptions,
-  Currency,
-  Network,
-  InvoiceStatus,
-  WithdrawalStatus,
-  DepositStatus,
-  PaginationParams,
-  PaginatedResponse,
+  // Full OpenAPI types
+  paths,
+  components,
+  operations,
+  // Invoices
   Invoice,
-  InvoiceCreateParams,
-  InvoiceListParams,
+  InvoiceCreated,
+  CreateInvoiceRequest,
+  InvoiceListResponse,
+  InvoiceStatus,
+  // Deposit Addresses
   DepositAddress,
-  DepositAddressCreateParams,
-  DepositAddressListParams,
+  DepositAddressCreated,
+  CreateDepositAddressRequest,
+  DepositAddressListResponse,
+  // Deposits
   Deposit,
-  DepositListParams,
-  Withdrawal,
-  WithdrawalCreateParams,
-  WithdrawalListParams,
+  DepositListResponse,
+  // Assets
+  Asset,
+  AssetNetwork,
+  AssetListResponse,
+  // Webhooks
+  WebhookPayload,
+  DepositWebhookPayload,
+  // Common
+  Pagination,
+  ErrorResponse,
 } from './types/index.js';
 
+// Errors
 export {
   PayCoinProError,
   APIError,

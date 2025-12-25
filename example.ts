@@ -8,13 +8,12 @@ async function main() {
   // Create an invoice
   const invoice = await client.invoices.create({
     amount: 99.99,
-    currency: 'USDT',
-    network: 'bsc',
+    currency: 'USD',
     orderId: 'ORD-123',
-    webhookUrl: 'https://yoursite.com/webhooks',
+    callbackUrl: 'https://yoursite.com/webhooks',
   });
   console.log('Invoice created:', invoice.id);
-  console.log('Payment address:', invoice.paymentAddress);
+  console.log('Payment URL:', invoice.paymentUrl);
 
   // Get invoice
   const fetched = await client.invoices.retrieve(invoice.id);
@@ -22,27 +21,24 @@ async function main() {
 
   // List invoices
   const invoices = await client.invoices.list({ limit: 10 });
-  console.log('Total invoices:', invoices.data.length);
+  console.log('Total invoices:', invoices.invoices.length);
 
   // Create deposit address
   const address = await client.depositAddresses.create({
-    asset: 'USDT',
-    network: 'bsc',
+    assetId: 'asset_usdt_bsc',
   });
   console.log('Deposit address:', address.address);
 
   // List deposits
   const deposits = await client.deposits.list();
-  console.log('Deposits:', deposits.data.length);
+  console.log('Deposits:', deposits.deposits.length);
 
-  // Create withdrawal
-  const withdrawal = await client.withdrawals.create({
-    asset: 'USDT',
-    network: 'bsc',
-    amount: 100,
-    address: '0x...',
-  });
-  console.log('Withdrawal created:', withdrawal.id);
+  // List available assets
+  const assetsResponse = await client.assets.list();
+  console.log('Available assets:', assetsResponse.assets.length);
+  for (const asset of assetsResponse.assets) {
+    console.log(`- ${asset.symbol} (${asset.name})`);
+  }
 }
 
 main().catch(console.error);
