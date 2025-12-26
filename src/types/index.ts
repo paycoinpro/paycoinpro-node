@@ -59,9 +59,12 @@ export type Asset = components['schemas']['Asset'];
 export type AssetNetwork = components['schemas']['AssetNetwork'];
 export type AssetListResponse = components['schemas']['AssetListResponse'];
 
-// Webhooks
+// Webhooks (unified - same endpoint receives both invoice and deposit events)
 export type WebhookPayload = components['schemas']['WebhookPayload'];
+export type InvoiceWebhookPayload = components['schemas']['InvoiceWebhookPayload'];
 export type DepositWebhookPayload = components['schemas']['DepositWebhookPayload'];
+export type InvoiceEvent = InvoiceWebhookPayload['event'];
+export type DepositEvent = DepositWebhookPayload['event'];
 
 // Common
 export type Pagination = components['schemas']['Pagination'];

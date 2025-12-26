@@ -446,10 +446,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Invoice Webhook Payload
-         * @description This is the payload format sent to your webhook URL when **invoice** payment events occur.
+         * Webhook Payload
+         * @description This is the payload format sent to your webhook URL for all payment events (invoices and deposits).
          *
-         *     **Available Events:**
+         *     **Invoice Events:**
          *     - `invoice.created` - New invoice created
          *     - `invoice.awaiting` - Customer selected payment method
          *     - `invoice.paid` - Payment received and confirmed
@@ -457,56 +457,11 @@ export interface paths {
          *     - `invoice.overpaid` - Payment exceeds expected amount
          *     - `invoice.expired` - Invoice expired without payment
          *
-         *     **Signature Verification:**
-         *     Verify webhook authenticity using the `X-PayCoinPro-Signature` header with HMAC-SHA256.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["WebhookPayload"];
-                };
-            };
-            responses: {
-                /** @description Webhook processed successfully */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/your-deposit-webhook-endpoint": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Deposit Webhook Payload
-         * @description This is the payload format sent to your webhook URL when a **deposit** is received.
+         *     **Deposit Events:**
+         *     - `deposit.received` - Deposit confirmed on blockchain and credited to balance
          *
-         *     **Event:** `deposit.received`
-         *
-         *     Sent when a deposit is confirmed on the blockchain and credited to your balance.
-         *
-         *     **Signature Verification:**
-         *     Verify webhook authenticity using the `X-PayCoinPro-Signature` header with HMAC-SHA256.
+         *     **Headers:**
+         *     - `X-Payload-Hash` - HMAC-SHA512 signature for verification
          *
          *     **Response:** Return HTTP 200 to acknowledge receipt.
          */
@@ -519,7 +474,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["DepositWebhookPayload"];
+                    "application/json": components["schemas"]["WebhookPayload"];
                 };
             };
             responses: {
@@ -776,7 +731,12 @@ export interface components {
             invoices: components["schemas"]["Invoice"][];
             pagination: components["schemas"]["Pagination"];
         };
-        WebhookPayload: {
+        /**
+         * @description Unified webhook payload - can be either an invoice event or deposit event.
+         * Check the `event` field to determine the payload type.
+         */
+        WebhookPayload: components["schemas"]["InvoiceWebhookPayload"] | components["schemas"]["DepositWebhookPayload"];
+        InvoiceWebhookPayload: {
             /**
              * @example invoice.paid
              * @enum {string}
@@ -797,18 +757,18 @@ export interface components {
                 /** @example USD */
                 currency: string;
                 /** @example 0.0025 */
-                amountCrypto: string;
+                amountCrypto: string | null;
                 /** @example BTC */
-                asset: string;
+                asset: string | null;
                 /** @example bitcoin */
-                network: string;
+                network: string | null;
                 /** @example abc123... */
-                txHash: string;
+                txHash: string | null;
                 /**
                  * Format: date-time
                  * @example 2024-01-15T12:30:00.000Z
                  */
-                paidAt: string;
+                paidAt: string | null;
             };
         };
         ErrorResponse: {
@@ -971,30 +931,46 @@ export interface components {
              */
             event: "deposit.received";
             /**
-             * @example CONFIRMED
-             * @enum {string}
-             */
-            status: "CONFIRMED";
-            /** @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00 */
-            address: string;
-            /** @example 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef */
-            txHash: string;
-            /**
-             * @description Amount received in crypto
-             * @example 100.5
-             */
-            amount: number;
-            /** @example USDT */
-            cryptoSymbol: string;
-            /** @example BSC */
-            network: string;
-            /** @example BNB Smart Chain */
-            networkName: string;
-            /**
              * Format: date-time
              * @example 2025-12-22T10:31:00.000Z
              */
             timestamp: string;
+            data: {
+                /** @example dep_abc123xyz */
+                depositId: string;
+                /** @example depaddr_cly1234567890 */
+                depositAddressId: string;
+                /** @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00 */
+                address: string;
+                /** @example 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef */
+                txHash: string;
+                /**
+                 * @description Amount received in crypto
+                 * @example 100.5
+                 */
+                amount: string;
+                /**
+                 * @description Net amount after fees
+                 * @example 99.5
+                 */
+                netAmount: string;
+                /** @example USDT */
+                asset: string;
+                /** @example BSC */
+                network: string;
+                /** @example BNB Smart Chain */
+                networkName: string;
+                /**
+                 * @example CONFIRMED
+                 * @enum {string}
+                 */
+                status: "CONFIRMED";
+                /**
+                 * Format: date-time
+                 * @example 2025-12-22T10:31:00.000Z
+                 */
+                confirmedAt: string;
+            };
         };
         AssetNetwork: {
             /**
