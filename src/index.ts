@@ -53,3 +53,6 @@ export {
   TimeoutError,
   ConnectionError,
 } from './lib/errors.js';
+
+export { WebhookVerificationError } from './resources/webhooks.js';
+export type { WebhookEvent } from './resources/webhooks.js';

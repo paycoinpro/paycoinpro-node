@@ -8,6 +8,7 @@
 // SDK Configuration (not from API)
 export interface PayCoinProOptions {
   apiKey: string;
+  webhookSecret?: string;
   baseURL?: string;
   timeout?: number;
   maxRetries?: number;

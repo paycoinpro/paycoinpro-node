@@ -82,20 +82,37 @@ const { assets } = await client.assets.list();
 
 ## Webhook Verification
 
-Verify webhooks on your server using HMAC-SHA512:
+Verify webhooks using the built-in helper:
 
 ```typescript
-import { createHmac } from 'crypto';
+import PayCoinPro, { WebhookVerificationError } from 'paycoinpro';
+
+const client = new PayCoinPro({
+  apiKey: 'pk_live_...',
+  webhookSecret: 'whsec_...',
+});
 
 app.post('/webhooks', (req, res) => {
-  const signature = req.headers['x-payload-hash'];
-  const payload = JSON.stringify(req.body);
-  const expected = createHmac('sha512', WEBHOOK_SECRET).update(payload).digest('hex');
+  try {
+    const event = client.webhooks.verify(
+      req.body,
+      req.headers['x-payload-hash']
+    );
 
-  if (signature === expected) {
-    // Valid webhook
-    const { type, data } = req.body;
-    // Handle event...
+    switch (event.event) {
+      case 'invoice.paid':
+        // Handle paid invoice
+        break;
+      case 'deposit.received':
+        // Handle deposit
+        break;
+    }
+
+    res.status(200).send('OK');
+  } catch (error) {
+    if (error instanceof WebhookVerificationError) {
+      res.status(400).send('Invalid signature');
+    }
   }
 });
 ```
