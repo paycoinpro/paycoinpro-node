@@ -2,12 +2,12 @@
  * PayCoinPro HTTP Client
  */
 
-import type { PayCoinProOptions, RequestOptions, APIResponse } from '../types/index.js';
+import type { PayCoinProOptions, RequestOptions } from '../types/index.js';
 import { APIError, TimeoutError, ConnectionError } from './errors.js';
 
 const DEFAULT_BASE_URL = 'https://paycoinpro.com/api/v1';
 const DEFAULT_TIMEOUT = 30000;
-const DEFAULT_MAX_RETRIES = 2;
+const DEFAULT_MAX_RETRIES = 0;
 
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -106,13 +106,14 @@ export class APIClient {
 
       clearTimeout(timeoutId);
 
-      const data = (await response.json()) as APIResponse<T>;
+      const data = await response.json();
 
       if (!response.ok) {
         throw APIError.fromResponse(response.status, data?.error);
       }
 
-      return data.data;
+      // API returns data directly, not wrapped in { data: ... }
+      return data as T;
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -134,7 +135,10 @@ export class APIClient {
   }
 
   private buildURL(path: string, params?: Record<string, unknown>): string {
-    const url = new URL(path, this.baseURL);
+    // Ensure baseURL ends without slash and path starts without slash for proper concatenation
+    const base = this.baseURL.replace(/\/$/, '');
+    const cleanPath = path.replace(/^\//, '');
+    const url = new URL(`${base}/${cleanPath}`);
 
     if (params) {
       for (const [key, value] of Object.entries(params)) {
