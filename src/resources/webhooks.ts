@@ -51,9 +51,7 @@ export class Webhooks {
     }
 
     const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
-    const expected = createHmac('sha512', secret)
-      .update(payloadString)
-      .digest('hex');
+    const expected = createHmac('sha512', secret).update(payloadString).digest('hex');
 
     if (!this.secureCompare(signature, expected)) {
       throw new WebhookVerificationError('Invalid webhook signature');
@@ -72,9 +70,7 @@ export class Webhooks {
    */
   sign(payload: string | object, secret: string): string {
     const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
-    return createHmac('sha512', secret)
-      .update(payloadString)
-      .digest('hex');
+    return createHmac('sha512', secret).update(payloadString).digest('hex');
   }
 
   /**

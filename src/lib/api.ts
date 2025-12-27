@@ -88,7 +88,7 @@ export class APIClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.apiKey}`,
+      Authorization: `Bearer ${this.apiKey}`,
       ...options?.headers,
     };
 

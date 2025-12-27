@@ -16,6 +16,9 @@ export class DepositAddresses {
   }
 
   async list(params?: DepositAddressListParams): Promise<DepositAddressListResponse> {
-    return this.client.get<DepositAddressListResponse>('/deposit-addresses', params as Record<string, unknown>);
+    return this.client.get<DepositAddressListResponse>(
+      '/deposit-addresses',
+      params as Record<string, unknown>
+    );
   }
 }
