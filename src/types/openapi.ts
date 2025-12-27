@@ -285,7 +285,11 @@ export interface paths {
         };
         /**
          * List Deposit Addresses
-         * @description List all your deposit addresses with pagination.
+         * @description List all your deposit addresses with optional filtering and pagination.
+         *
+         *     **Filtering:**
+         *     - `externalUserId`: Filter by external user identifier
+         *     - `status`: Filter by address status (ACTIVE, INACTIVE, SUSPENDED)
          */
         get: {
             parameters: {
@@ -294,6 +298,10 @@ export interface paths {
                     limit?: number;
                     /** @description Number of results to skip (default: 0) */
                     offset?: number | null;
+                    /** @description Filter by external user identifier */
+                    externalUserId?: string;
+                    /** @description Filter by address status */
+                    status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
                 };
                 header?: never;
                 path?: never;
@@ -327,9 +335,15 @@ export interface paths {
          * @description Get or create a persistent deposit address for a specific cryptocurrency on a network.
          *
          *     **Key Features:**
-         *     - Addresses never expire and can receive unlimited deposits
-         *     - Idempotent - calling multiple times with the same asset/network returns the same address
+         *     - Create unique addresses per external user (customer) using `externalUserId`
+         *     - Addresses auto-expire after 30 days of inactivity (configurable via `expiryDays`)
+         *     - Expiry is automatically extended by 30 days on each deposit
+         *     - Idempotent - same (asset, network, externalUserId) combination returns the same address
          *     - Funds are automatically credited to your merchant balance
+         *
+         *     **Use Cases:**
+         *     - **Without externalUserId**: One address per merchant per asset (default)
+         *     - **With externalUserId**: Unique address for each of your customers
          *
          *     **Important:** Only send the correct cryptocurrency to this address on the correct network.
          */
@@ -345,7 +359,9 @@ export interface paths {
                     /**
                      * @example {
                      *       "asset": "usdt",
-                     *       "network": "bsc"
+                     *       "network": "bsc",
+                     *       "externalUserId": "user_123",
+                     *       "expiryDays": 30
                      *     }
                      */
                     "application/json": components["schemas"]["CreateDepositAddressRequest"];
@@ -363,6 +379,7 @@ export interface paths {
                          *       "id": "depaddr_cly1234567890",
                          *       "address": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
                          *       "status": "ACTIVE",
+                         *       "externalUserId": "user_123",
                          *       "asset": {
                          *         "id": "asset_usdt_bsc",
                          *         "symbol": "USDT",
@@ -376,6 +393,7 @@ export interface paths {
                          *       },
                          *       "totalReceived": "0",
                          *       "paymentCount": 0,
+                         *       "expiresAt": "2026-01-31T12:00:00.000Z",
                          *       "createdAt": "2025-01-01T12:00:00.000Z"
                          *     }
                          */
@@ -493,24 +511,20 @@ export interface paths {
          * Webhook Events
          * @description All webhook events are sent to your **single configured webhook URL** in your merchant settings.
          *
-         *     The `event` field in the payload indicates the type of event.
+         *     The `event` field indicates the type: `invoice` or `deposit`. Check the `status` field for the specific state.
          *
          *     ---
          *
-         *     ## Invoice Events
+         *     ## Invoice Webhook
          *
-         *     | Event | Description |
-         *     |-------|-------------|
-         *     | `invoice.paid` | Payment received and confirmed |
-         *     | `invoice.underpaid` | Payment below expected amount (within tolerance) |
-         *     | `invoice.overpaid` | Payment exceeds expected amount |
-         *     | `invoice.partial` | Partial payment received |
-         *     | `invoice.expired` | Invoice expired without payment |
+         *     | Event | Status Values |
+         *     |-------|---------------|
+         *     | `invoice` | `PAID`, `UNDERPAID`, `OVERPAID`, `PARTIAL`, `EXPIRED` |
          *
          *     **Invoice Webhook Payload:**
          *     ```json
          *     {
-         *       "event": "invoice.paid",
+         *       "event": "invoice",
          *       "invoiceId": "inv_abc123",
          *       "orderId": "ORDER-001",
          *       "status": "PAID",
@@ -530,27 +544,31 @@ export interface paths {
          *
          *     ---
          *
-         *     ## Deposit Events
+         *     ## Deposit Webhook
          *
-         *     | Event | Description |
-         *     |-------|-------------|
-         *     | `deposit.received` | Deposit confirmed and credited to balance |
+         *     | Event | Status Values |
+         *     |-------|---------------|
+         *     | `deposit` | `CONFIRMED` |
          *
          *     **Deposit Webhook Payload:**
          *     ```json
          *     {
-         *       "event": "deposit.received",
+         *       "event": "deposit",
          *       "status": "CONFIRMED",
          *       "depositAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
+         *       "externalUserId": "user_123",
          *       "senderAddress": "0x9876543210fedcba9876543210fedcba98765432",
          *       "txHash": "0x123...",
          *       "amount": 100.50,
+         *       "amountFiat": 100.50,
          *       "cryptoSymbol": "USDT",
          *       "network": "BSC",
          *       "networkName": "BNB Smart Chain",
          *       "timestamp": "2025-01-01T12:00:00.000Z"
          *     }
          *     ```
+         *
+         *     > **Note:** `externalUserId` is included if you provided one when creating the deposit address. This helps you identify which of your customers made the deposit.
          *
          *     ---
          *
@@ -861,6 +879,16 @@ export interface components {
              * @example bsc
              */
             network: string;
+            /**
+             * @description External user identifier for tracking deposits per customer. Max 255 characters.
+             * @example user_123
+             */
+            externalUserId?: string;
+            /**
+             * @description Number of days until address expires (1-365). Default: 30. Set to null for never expires.
+             * @example 30
+             */
+            expiryDays?: number;
         };
         DepositAddress: {
             /** @example depaddr_cly1234567890 */
@@ -872,6 +900,11 @@ export interface components {
              * @enum {string}
              */
             status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+            /**
+             * @description External user identifier for tracking deposits
+             * @example user_123
+             */
+            externalUserId: string | null;
             asset: {
                 /** @example asset_usdt_bsc */
                 id: string;
@@ -901,6 +934,12 @@ export interface components {
             lastPaymentAt: string | null;
             /**
              * Format: date-time
+             * @description When the address expires (null = never)
+             * @example 2026-01-01T10:30:00.000Z
+             */
+            expiresAt: string | null;
+            /**
+             * Format: date-time
              * @example 2025-12-01T10:30:00.000Z
              */
             createdAt: string;
@@ -915,6 +954,11 @@ export interface components {
              * @enum {string}
              */
             status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+            /**
+             * @description External user identifier for tracking deposits
+             * @example user_123
+             */
+            externalUserId: string | null;
             asset: {
                 /** @example asset_usdt_bsc */
                 id: string;
@@ -937,6 +981,12 @@ export interface components {
             totalReceived: string;
             /** @example 0 */
             paymentCount: number;
+            /**
+             * Format: date-time
+             * @description When the address expires (null = never)
+             * @example 2026-01-01T10:30:00.000Z
+             */
+            expiresAt: string | null;
             /**
              * Format: date-time
              * @example 2025-12-22T10:30:00.000Z
@@ -1003,16 +1053,21 @@ export interface components {
         };
         InvoiceWebhookPayload: {
             /**
-             * @example invoice.paid
+             * @description Event type - always "invoice" for invoice webhooks
+             * @example invoice
              * @enum {string}
              */
-            event: "invoice.paid" | "invoice.underpaid" | "invoice.overpaid" | "invoice.partial" | "invoice.expired" | "invoice.updated";
+            event: "invoice";
             /** @example clx1abc123def456 */
             invoiceId: string;
             /** @example ORD-12345 */
             orderId: string | null;
-            /** @example PAID */
-            status: string;
+            /**
+             * @description Invoice status: PAID, UNDERPAID, OVERPAID, PARTIAL, EXPIRED
+             * @example PAID
+             * @enum {string}
+             */
+            status: "PAID" | "UNDERPAID" | "OVERPAID" | "PARTIAL" | "EXPIRED";
             /**
              * @description Address where payment was received
              * @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00
@@ -1056,11 +1111,13 @@ export interface components {
         };
         DepositWebhookPayload: {
             /**
-             * @example deposit.received
+             * @description Event type - always "deposit" for deposit webhooks
+             * @example deposit
              * @enum {string}
              */
-            event: "deposit.received";
+            event: "deposit";
             /**
+             * @description Deposit status: CONFIRMED
              * @example CONFIRMED
              * @enum {string}
              */
@@ -1070,6 +1127,11 @@ export interface components {
              * @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00
              */
             depositAddress: string;
+            /**
+             * @description External user identifier (if provided when creating the address)
+             * @example user_123
+             */
+            externalUserId: string | null;
             /**
              * @description Address that sent the deposit (may be null)
              * @example 0x9876543210fedcba9876543210fedcba98765432
@@ -1082,6 +1144,11 @@ export interface components {
              * @example 100.5
              */
             amount: number;
+            /**
+             * @description Equivalent amount in USD (may be null if price unavailable)
+             * @example 100.5
+             */
+            amountFiat: number | null;
             /** @example USDT */
             cryptoSymbol: string;
             /** @example BSC */

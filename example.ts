@@ -27,6 +27,7 @@ async function main() {
   const address = await client.depositAddresses.create({
     asset: 'usdt',
     network: 'bsc',
+    externalUserId: 'user_123',
   });
   console.log('Deposit address:', address.address);
 
