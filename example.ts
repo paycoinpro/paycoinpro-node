@@ -25,7 +25,8 @@ async function main() {
 
   // Create deposit address
   const address = await client.depositAddresses.create({
-    assetId: 'asset_usdt_bsc',
+    asset: 'usdt',
+    network: 'bsc',
   });
   console.log('Deposit address:', address.address);
 

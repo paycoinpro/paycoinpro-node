@@ -35,6 +35,7 @@ export type {
   AssetNetwork,
   AssetListResponse,
   // Webhooks
+  InvoiceWebhookPayload,
   WebhookPayload,
   DepositWebhookPayload,
   // Common

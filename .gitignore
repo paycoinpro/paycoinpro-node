@@ -29,7 +29,8 @@ npm-debug.log*
 
 # Testing
 .vitest/
-
+guide.md
 # Package manager locks (keep only one)
 # yarn.lock
 # pnpm-lock.yaml
+gudie.md

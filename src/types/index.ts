@@ -60,8 +60,10 @@ export type AssetNetwork = components['schemas']['AssetNetwork'];
 export type AssetListResponse = components['schemas']['AssetListResponse'];
 
 // Webhooks
-export type WebhookPayload = components['schemas']['WebhookPayload'];
+export type InvoiceWebhookPayload = components['schemas']['InvoiceWebhookPayload'];
 export type DepositWebhookPayload = components['schemas']['DepositWebhookPayload'];
+// Alias for backwards compatibility
+export type WebhookPayload = InvoiceWebhookPayload;
 
 // Common
 export type Pagination = components['schemas']['Pagination'];
