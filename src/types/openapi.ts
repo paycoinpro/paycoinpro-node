@@ -4,1210 +4,1203 @@
  */
 
 export interface paths {
-  '/api/v1/invoices': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Invoices
+         * @description List all invoices with optional filtering and pagination.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Filter by invoice status */
+                    status?: "PENDING" | "AWAITING" | "PAID" | "EXPIRED" | "PARTIAL" | "UNDERPAID" | "OVERPAID";
+                    /** @description Results per page (1-100, default: 20) */
+                    limit?: number;
+                    /** @description Number of results to skip (default: 0) */
+                    offset?: number | null;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of invoices */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InvoiceListResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create Invoice
+         * @description Create a new payment invoice. Returns a payment URL that you can redirect your customer to.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateInvoiceRequest"];
+                };
+            };
+            responses: {
+                /** @description Invoice created successfully */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InvoiceCreated"];
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized - Invalid or missing API key */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * List Invoices
-     * @description List all invoices with optional filtering and pagination.
-     */
-    get: {
-      parameters: {
-        query?: {
-          /** @description Filter by invoice status */
-          status?:
-            | 'PENDING'
-            | 'AWAITING'
-            | 'PAID'
-            | 'EXPIRED'
-            | 'PARTIAL'
-            | 'UNDERPAID'
-            | 'OVERPAID';
-          /** @description Results per page (1-100, default: 20) */
-          limit?: number;
-          /** @description Number of results to skip (default: 0) */
-          offset?: number | null;
+    "/api/v1/invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description List of invoices */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['InvoiceListResponse'];
-          };
+        /**
+         * Get Invoice
+         * @description Retrieve details of a specific invoice by ID.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Invoice details */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Invoice"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Invoice not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    put?: never;
-    /**
-     * Create Invoice
-     * @description Create a new payment invoice. Returns a payment URL that you can redirect your customer to.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/json': components['schemas']['CreateInvoiceRequest'];
+    "/api/v1/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-      responses: {
-        /** @description Invoice created successfully */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['InvoiceCreated'];
-          };
+        /**
+         * List Available Assets
+         * @description Retrieve the list of available cryptocurrencies and their supported networks.
+         *
+         *     Use this endpoint to display currency options to your users or to validate asset/network combinations before creating invoices or deposit addresses.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of available assets */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "assets": [
+                         *         {
+                         *           "symbol": "USDT",
+                         *           "name": "Tether USD",
+                         *           "iconUrl": "https://paycoinpro.com/icons/usdt.png",
+                         *           "networks": [
+                         *             {
+                         *               "code": "ethereum",
+                         *               "name": "Ethereum"
+                         *             },
+                         *             {
+                         *               "code": "bsc",
+                         *               "name": "BNB Smart Chain"
+                         *             },
+                         *             {
+                         *               "code": "polygon",
+                         *               "name": "Polygon"
+                         *             },
+                         *             {
+                         *               "code": "tron",
+                         *               "name": "Tron"
+                         *             }
+                         *           ]
+                         *         },
+                         *         {
+                         *           "symbol": "BTC",
+                         *           "name": "Bitcoin",
+                         *           "iconUrl": "https://paycoinpro.com/icons/btc.png",
+                         *           "networks": [
+                         *             {
+                         *               "code": "bitcoin",
+                         *               "name": "Bitcoin"
+                         *             }
+                         *           ]
+                         *         },
+                         *         {
+                         *           "symbol": "ETH",
+                         *           "name": "Ethereum",
+                         *           "iconUrl": "https://paycoinpro.com/icons/eth.png",
+                         *           "networks": [
+                         *             {
+                         *               "code": "ethereum",
+                         *               "name": "Ethereum"
+                         *             },
+                         *             {
+                         *               "code": "arbitrum",
+                         *               "name": "Arbitrum One"
+                         *             },
+                         *             {
+                         *               "code": "optimism",
+                         *               "name": "Optimism"
+                         *             },
+                         *             {
+                         *               "code": "base",
+                         *               "name": "Base"
+                         *             }
+                         *           ]
+                         *         }
+                         *       ]
+                         *     }
+                         */
+                        "application/json": components["schemas"]["AssetListResponse"];
+                    };
+                };
+                /** @description Unauthorized - Invalid or missing API key */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Validation error */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized - Invalid or missing API key */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/invoices/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/api/v1/deposit-addresses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Deposit Addresses
+         * @description List all your deposit addresses with optional filtering and pagination.
+         *
+         *     **Filtering:**
+         *     - `externalUserId`: Filter by external user identifier
+         *     - `status`: Filter by address status (ACTIVE, INACTIVE, SUSPENDED)
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Results per page (1-100, default: 50) */
+                    limit?: number;
+                    /** @description Number of results to skip (default: 0) */
+                    offset?: number | null;
+                    /** @description Filter by external user identifier */
+                    externalUserId?: string;
+                    /** @description Filter by address status */
+                    status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of deposit addresses */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DepositAddressListResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Get or Create Deposit Address
+         * @description Get or create a persistent deposit address for a specific cryptocurrency on a network.
+         *
+         *     **Key Features:**
+         *     - Create unique addresses per external user (customer) using `externalUserId`
+         *     - Addresses auto-expire after 30 days of inactivity (configurable via `expiryDays`)
+         *     - Expiry is automatically extended by 30 days on each deposit
+         *     - Idempotent - same (asset, network, externalUserId) combination returns the same address
+         *     - Funds are automatically credited to your merchant balance
+         *
+         *     **Use Cases:**
+         *     - **Without externalUserId**: One address per merchant per asset (default)
+         *     - **With externalUserId**: Unique address for each of your customers
+         *
+         *     **Important:** Only send the correct cryptocurrency to this address on the correct network.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    /**
+                     * @example {
+                     *       "asset": "usdt",
+                     *       "network": "bsc",
+                     *       "externalUserId": "user_123",
+                     *       "expiryDays": 30
+                     *     }
+                     */
+                    "application/json": components["schemas"]["CreateDepositAddressRequest"];
+                };
+            };
+            responses: {
+                /** @description Deposit address created or retrieved */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "id": "depaddr_cly1234567890",
+                         *       "address": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
+                         *       "status": "ACTIVE",
+                         *       "externalUserId": "user_123",
+                         *       "asset": {
+                         *         "id": "asset_usdt_bsc",
+                         *         "symbol": "USDT",
+                         *         "name": "Tether USD",
+                         *         "decimals": 18
+                         *       },
+                         *       "network": {
+                         *         "id": "network_bsc",
+                         *         "code": "bsc",
+                         *         "name": "BNB Smart Chain"
+                         *       },
+                         *       "totalReceived": "0",
+                         *       "paymentCount": 0,
+                         *       "expiresAt": "2026-01-31T12:00:00.000Z",
+                         *       "createdAt": "2025-01-01T12:00:00.000Z"
+                         *     }
+                         */
+                        "application/json": components["schemas"]["DepositAddressCreated"];
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Asset or network not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "error": "Asset 'usdt' not found on network 'invalid'",
+                         *       "code": "NOT_FOUND"
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Invoice
-     * @description Retrieve details of a specific invoice by ID.
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: string;
+    "/api/v1/deposits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Invoice details */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Invoice'];
-          };
+        /**
+         * List Deposits
+         * @description List all deposits received across your deposit addresses.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Results per page (1-100, default: 50) */
+                    limit?: number;
+                    /** @description Number of results to skip (default: 0) */
+                    offset?: number | null;
+                    /** @description Filter by deposit address ID */
+                    depositAddressId?: string;
+                    /** @description Filter by deposit status */
+                    status?: "PENDING" | "CONFIRMED" | "SWEPT" | "FAILED";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description List of deposits */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DepositListResponse"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
         };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Invoice not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/assets': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/your-webhook-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Webhook Events
+         * @description All webhook events are sent to your **single configured webhook URL** in your merchant settings.
+         *
+         *     The `event` field indicates the type: `invoice` or `deposit`. Check the `status` field for the specific state.
+         *
+         *     ---
+         *
+         *     ## Invoice Webhook
+         *
+         *     | Event | Status Values |
+         *     |-------|---------------|
+         *     | `invoice` | `PAID`, `UNDERPAID`, `OVERPAID`, `PARTIAL`, `EXPIRED` |
+         *
+         *     **Invoice Webhook Payload:**
+         *     ```json
+         *     {
+         *       "event": "invoice",
+         *       "invoiceId": "inv_abc123",
+         *       "orderId": "ORDER-001",
+         *       "status": "PAID",
+         *       "depositAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
+         *       "senderAddress": "0x9876543210fedcba9876543210fedcba98765432",
+         *       "txHash": "0x123...",
+         *       "amountReceived": 100.50,
+         *       "amountExpected": 100.00,
+         *       "cryptoSymbol": "USDT",
+         *       "network": "BSC",
+         *       "networkName": "BNB Smart Chain",
+         *       "amountFiat": 99.99,
+         *       "fiatCurrency": "USD",
+         *       "timestamp": "2025-01-01T12:00:00.000Z"
+         *     }
+         *     ```
+         *
+         *     ---
+         *
+         *     ## Deposit Webhook
+         *
+         *     | Event | Status Values |
+         *     |-------|---------------|
+         *     | `deposit` | `CONFIRMED` |
+         *
+         *     **Deposit Webhook Payload:**
+         *     ```json
+         *     {
+         *       "event": "deposit",
+         *       "status": "CONFIRMED",
+         *       "depositAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
+         *       "externalUserId": "user_123",
+         *       "senderAddress": "0x9876543210fedcba9876543210fedcba98765432",
+         *       "txHash": "0x123...",
+         *       "amount": 100.50,
+         *       "amountFiat": 100.50,
+         *       "cryptoSymbol": "USDT",
+         *       "network": "BSC",
+         *       "networkName": "BNB Smart Chain",
+         *       "timestamp": "2025-01-01T12:00:00.000Z"
+         *     }
+         *     ```
+         *
+         *     > **Note:** `externalUserId` is included if you provided one when creating the deposit address. This helps you identify which of your customers made the deposit.
+         *
+         *     ---
+         *
+         *     ## Signature Verification
+         *
+         *     All webhooks include these headers for verification:
+         *
+         *     | Header | Description |
+         *     |--------|-------------|
+         *     | `X-PayCoinPro-Signature` | HMAC-SHA256 signature of the payload |
+         *     | `X-PayCoinPro-Timestamp` | Unix timestamp when the webhook was sent |
+         *
+         *     **Verification Example (Node.js):**
+         *     ```javascript
+         *     const crypto = require('crypto');
+         *
+         *     function verifyWebhook(payload, signature, secret) {
+         *       const expected = crypto
+         *         .createHmac('sha256', secret)
+         *         .update(JSON.stringify(payload))
+         *         .digest('hex');
+         *       return crypto.timingSafeEqual(
+         *         Buffer.from(signature),
+         *         Buffer.from(expected)
+         *       );
+         *     }
+         *     ```
+         *
+         *     **Response:** Return HTTP 200 to acknowledge receipt. We will retry failed webhooks up to 3 times.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Webhook processed successfully */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * List Available Assets
-     * @description Retrieve the list of available cryptocurrencies and their supported networks.
-     *
-     *     Use this endpoint to display currency options to your users or to validate asset/network combinations before creating invoices or deposit addresses.
-     */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description List of available assets */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            /**
-             * @example {
-             *       "assets": [
-             *         {
-             *           "symbol": "USDT",
-             *           "name": "Tether USD",
-             *           "iconUrl": "https://paycoinpro.com/icons/usdt.png",
-             *           "networks": [
-             *             {
-             *               "code": "ethereum",
-             *               "name": "Ethereum"
-             *             },
-             *             {
-             *               "code": "bsc",
-             *               "name": "BNB Smart Chain"
-             *             },
-             *             {
-             *               "code": "polygon",
-             *               "name": "Polygon"
-             *             },
-             *             {
-             *               "code": "tron",
-             *               "name": "Tron"
-             *             }
-             *           ]
-             *         },
-             *         {
-             *           "symbol": "BTC",
-             *           "name": "Bitcoin",
-             *           "iconUrl": "https://paycoinpro.com/icons/btc.png",
-             *           "networks": [
-             *             {
-             *               "code": "bitcoin",
-             *               "name": "Bitcoin"
-             *             }
-             *           ]
-             *         },
-             *         {
-             *           "symbol": "ETH",
-             *           "name": "Ethereum",
-             *           "iconUrl": "https://paycoinpro.com/icons/eth.png",
-             *           "networks": [
-             *             {
-             *               "code": "ethereum",
-             *               "name": "Ethereum"
-             *             },
-             *             {
-             *               "code": "arbitrum",
-             *               "name": "Arbitrum One"
-             *             },
-             *             {
-             *               "code": "optimism",
-             *               "name": "Optimism"
-             *             },
-             *             {
-             *               "code": "base",
-             *               "name": "Base"
-             *             }
-             *           ]
-             *         }
-             *       ]
-             *     }
-             */
-            'application/json': components['schemas']['AssetListResponse'];
-          };
-        };
-        /** @description Unauthorized - Invalid or missing API key */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/deposit-addresses': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List Deposit Addresses
-     * @description List all your deposit addresses with optional filtering and pagination.
-     *
-     *     **Filtering:**
-     *     - `externalUserId`: Filter by external user identifier
-     *     - `status`: Filter by address status (ACTIVE, INACTIVE, SUSPENDED)
-     */
-    get: {
-      parameters: {
-        query?: {
-          /** @description Results per page (1-100, default: 50) */
-          limit?: number;
-          /** @description Number of results to skip (default: 0) */
-          offset?: number | null;
-          /** @description Filter by external user identifier */
-          externalUserId?: string;
-          /** @description Filter by address status */
-          status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-        };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description List of deposit addresses */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['DepositAddressListResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    /**
-     * Get or Create Deposit Address
-     * @description Get or create a persistent deposit address for a specific cryptocurrency on a network.
-     *
-     *     **Key Features:**
-     *     - Create unique addresses per external user (customer) using `externalUserId`
-     *     - Addresses auto-expire after 30 days of inactivity (configurable via `expiryDays`)
-     *     - Expiry is automatically extended by 30 days on each deposit
-     *     - Idempotent - same (asset, network, externalUserId) combination returns the same address
-     *     - Funds are automatically credited to your merchant balance
-     *
-     *     **Use Cases:**
-     *     - **Without externalUserId**: One address per merchant per asset (default)
-     *     - **With externalUserId**: Unique address for each of your customers
-     *
-     *     **Important:** Only send the correct cryptocurrency to this address on the correct network.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          /**
-           * @example {
-           *       "asset": "usdt",
-           *       "network": "bsc",
-           *       "externalUserId": "user_123",
-           *       "expiryDays": 30
-           *     }
-           */
-          'application/json': components['schemas']['CreateDepositAddressRequest'];
-        };
-      };
-      responses: {
-        /** @description Deposit address created or retrieved */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            /**
-             * @example {
-             *       "id": "depaddr_cly1234567890",
-             *       "address": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
-             *       "status": "ACTIVE",
-             *       "externalUserId": "user_123",
-             *       "asset": {
-             *         "id": "asset_usdt_bsc",
-             *         "symbol": "USDT",
-             *         "name": "Tether USD",
-             *         "decimals": 18
-             *       },
-             *       "network": {
-             *         "id": "network_bsc",
-             *         "code": "bsc",
-             *         "name": "BNB Smart Chain"
-             *       },
-             *       "totalReceived": "0",
-             *       "paymentCount": 0,
-             *       "expiresAt": "2026-01-31T12:00:00.000Z",
-             *       "createdAt": "2025-01-01T12:00:00.000Z"
-             *     }
-             */
-            'application/json': components['schemas']['DepositAddressCreated'];
-          };
-        };
-        /** @description Validation error */
-        400: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-        /** @description Asset or network not found */
-        404: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            /**
-             * @example {
-             *       "error": "Asset 'usdt' not found on network 'invalid'",
-             *       "code": "NOT_FOUND"
-             *     }
-             */
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/api/v1/deposits': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * List Deposits
-     * @description List all deposits received across your deposit addresses.
-     */
-    get: {
-      parameters: {
-        query?: {
-          /** @description Results per page (1-100, default: 50) */
-          limit?: number;
-          /** @description Number of results to skip (default: 0) */
-          offset?: number | null;
-          /** @description Filter by deposit address ID */
-          depositAddressId?: string;
-          /** @description Filter by deposit status */
-          status?: 'PENDING' | 'CONFIRMED' | 'SWEPT' | 'FAILED';
-        };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description List of deposits */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['DepositListResponse'];
-          };
-        };
-        /** @description Unauthorized */
-        401: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['ErrorResponse'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/your-webhook-url': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Webhook Events
-     * @description All webhook events are sent to your **single configured webhook URL** in your merchant settings.
-     *
-     *     The `event` field indicates the type: `invoice` or `deposit`. Check the `status` field for the specific state.
-     *
-     *     ---
-     *
-     *     ## Invoice Webhook
-     *
-     *     | Event | Status Values |
-     *     |-------|---------------|
-     *     | `invoice` | `PAID`, `UNDERPAID`, `OVERPAID`, `PARTIAL`, `EXPIRED` |
-     *
-     *     **Invoice Webhook Payload:**
-     *     ```json
-     *     {
-     *       "event": "invoice",
-     *       "invoiceId": "inv_abc123",
-     *       "orderId": "ORDER-001",
-     *       "status": "PAID",
-     *       "depositAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
-     *       "senderAddress": "0x9876543210fedcba9876543210fedcba98765432",
-     *       "txHash": "0x123...",
-     *       "amountReceived": 100.50,
-     *       "amountExpected": 100.00,
-     *       "cryptoSymbol": "USDT",
-     *       "network": "BSC",
-     *       "networkName": "BNB Smart Chain",
-     *       "amountFiat": 99.99,
-     *       "fiatCurrency": "USD",
-     *       "timestamp": "2025-01-01T12:00:00.000Z"
-     *     }
-     *     ```
-     *
-     *     ---
-     *
-     *     ## Deposit Webhook
-     *
-     *     | Event | Status Values |
-     *     |-------|---------------|
-     *     | `deposit` | `CONFIRMED` |
-     *
-     *     **Deposit Webhook Payload:**
-     *     ```json
-     *     {
-     *       "event": "deposit",
-     *       "status": "CONFIRMED",
-     *       "depositAddress": "0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00",
-     *       "externalUserId": "user_123",
-     *       "senderAddress": "0x9876543210fedcba9876543210fedcba98765432",
-     *       "txHash": "0x123...",
-     *       "amount": 100.50,
-     *       "amountFiat": 100.50,
-     *       "cryptoSymbol": "USDT",
-     *       "network": "BSC",
-     *       "networkName": "BNB Smart Chain",
-     *       "timestamp": "2025-01-01T12:00:00.000Z"
-     *     }
-     *     ```
-     *
-     *     > **Note:** `externalUserId` is included if you provided one when creating the deposit address. This helps you identify which of your customers made the deposit.
-     *
-     *     ---
-     *
-     *     ## Signature Verification
-     *
-     *     All webhooks include these headers for verification:
-     *
-     *     | Header | Description |
-     *     |--------|-------------|
-     *     | `X-PayCoinPro-Signature` | HMAC-SHA256 signature of the payload |
-     *     | `X-PayCoinPro-Timestamp` | Unix timestamp when the webhook was sent |
-     *
-     *     **Verification Example (Node.js):**
-     *     ```javascript
-     *     const crypto = require('crypto');
-     *
-     *     function verifyWebhook(payload, signature, secret) {
-     *       const expected = crypto
-     *         .createHmac('sha256', secret)
-     *         .update(JSON.stringify(payload))
-     *         .digest('hex');
-     *       return crypto.timingSafeEqual(
-     *         Buffer.from(signature),
-     *         Buffer.from(expected)
-     *       );
-     *     }
-     *     ```
-     *
-     *     **Response:** Return HTTP 200 to acknowledge receipt. We will retry failed webhooks up to 3 times.
-     */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Webhook processed successfully */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    CreateInvoiceRequest: {
-      /**
-       * @description Invoice amount in fiat currency
-       * @example 99.99
-       */
-      amount: number;
-      /**
-       * @description Fiat currency code (default: USD)
-       * @default USD
-       * @example USD
-       */
-      currency: string;
-      /**
-       * @description Your internal order reference
-       * @example ORD-12345
-       */
-      orderId?: string;
-      /**
-       * Format: email
-       * @description Customer email for notifications
-       * @example customer@example.com
-       */
-      customerEmail?: string;
-      /**
-       * @description Expiry time in minutes: 30 (30min), 60 (1h), or 120 (2h). If not provided, uses merchant default.
-       * @example 60
-       */
-      expiresIn?: 30 | 60 | 120;
-      /**
-       * @description Custom key-value metadata (max 20 keys, values must be primitives)
-       * @example {
-       *       "customField": "value"
-       *     }
-       */
-      metadata?: {
-        [key: string]: string | number | boolean | unknown | unknown;
-      };
-      /**
-       * @description Invoice title displayed on payment page
-       * @example Order #12345
-       */
-      title?: string;
-      /**
-       * @description Invoice description displayed on payment page
-       * @example Payment for premium subscription
-       */
-      description?: string;
-      /**
-       * Format: uri
-       * @description Webhook URL for payment notifications (overrides merchant default). Must be a public http/https URL.
-       * @example https://yoursite.com/api/webhook
-       */
-      callbackUrl?: string;
-      /**
-       * Format: uri
-       * @description Redirect URL after successful payment (overrides merchant default). Must be a public http/https URL.
-       * @example https://yoursite.com/success
-       */
-      successUrl?: string;
-      /**
-       * Format: uri
-       * @description Redirect URL if customer cancels (overrides merchant default). Must be a public http/https URL.
-       * @example https://yoursite.com/cancel
-       */
-      cancelUrl?: string;
-      /**
-       * @description Percentage below expected amount to accept as paid (0.1-1%). Default is 0.1%. If not provided, uses merchant default.
-       * @example 0.1
-       */
-      underpaymentTolerance?: number;
-      /**
-       * @description List of allowed currency symbols. If not provided, uses merchant default or all currencies.
-       * @example [
-       *       "usdt",
-       *       "btc",
-       *       "eth"
-       *     ]
-       */
-      allowedAssets?: string[];
-      /**
-       * @description Asset symbol (e.g., eth, btc, usdt). If provided with network, invoice will be auto-finalized with a deposit address.
-       * @example eth
-       */
-      asset?: string;
-      /**
-       * @description Network code (e.g., ethereum, polygon, bsc). Required if asset is provided.
-       * @example ethereum
-       */
-      network?: string;
+    schemas: {
+        CreateInvoiceRequest: {
+            /**
+             * @description Invoice amount in fiat currency
+             * @example 99.99
+             */
+            amount: number;
+            /**
+             * @description Fiat currency code (default: USD)
+             * @default USD
+             * @example USD
+             */
+            currency: string;
+            /**
+             * @description Your internal order reference
+             * @example ORD-12345
+             */
+            orderId?: string;
+            /**
+             * Format: email
+             * @description Customer email for notifications
+             * @example customer@example.com
+             */
+            customerEmail?: string;
+            /**
+             * @description Expiry time in minutes: 30 (30min), 60 (1h), or 120 (2h). If not provided, uses merchant default.
+             * @example 60
+             */
+            expiresIn?: 30 | 60 | 120;
+            /**
+             * @description Custom key-value metadata (max 20 keys, values must be primitives)
+             * @example {
+             *       "customField": "value"
+             *     }
+             */
+            metadata?: {
+                [key: string]: string | number | boolean | unknown | unknown;
+            };
+            /**
+             * @description Invoice title displayed on payment page
+             * @example Order #12345
+             */
+            title?: string;
+            /**
+             * @description Invoice description displayed on payment page
+             * @example Payment for premium subscription
+             */
+            description?: string;
+            /**
+             * Format: uri
+             * @description Webhook URL for payment notifications (overrides merchant default). Must be a public http/https URL.
+             * @example https://yoursite.com/api/webhook
+             */
+            callbackUrl?: string;
+            /**
+             * Format: uri
+             * @description Redirect URL after successful payment (overrides merchant default). Must be a public http/https URL.
+             * @example https://yoursite.com/success
+             */
+            successUrl?: string;
+            /**
+             * Format: uri
+             * @description Redirect URL if customer cancels (overrides merchant default). Must be a public http/https URL.
+             * @example https://yoursite.com/cancel
+             */
+            cancelUrl?: string;
+            /**
+             * @description Percentage below expected amount to accept as paid (0.1-1%). Default is 0.1%. If not provided, uses merchant default.
+             * @example 0.1
+             */
+            underpaymentTolerance?: number;
+            /**
+             * @description List of allowed currency symbols. If not provided, uses merchant default or all currencies.
+             * @example [
+             *       "usdt",
+             *       "btc",
+             *       "eth"
+             *     ]
+             */
+            allowedAssets?: string[];
+            /**
+             * @description Asset symbol (e.g., eth, btc, usdt). If provided with network, invoice will be auto-finalized with a deposit address.
+             * @example eth
+             */
+            asset?: string;
+            /**
+             * @description Network code (e.g., ethereum, polygon, bsc). Required if asset is provided.
+             * @example ethereum
+             */
+            network?: string;
+        };
+        Network: {
+            /** @example BSC */
+            code: string;
+            /** @example BNB Smart Chain */
+            name: string;
+        };
+        InvoiceAsset: {
+            /** @example USDT */
+            symbol: string;
+            /** @example Tether USD */
+            name: string;
+            /** @example 18 */
+            decimals: number;
+            /** @example https://... */
+            iconUrl: string | null;
+            network: components["schemas"]["Network"];
+        } | null;
+        Transaction: {
+            /** @example tx_abc123 */
+            id: string;
+            /** @example 0xabc123... */
+            txHash: string | null;
+            /** @example 0.0025 */
+            amount: number;
+            /** @example CONFIRMED */
+            status: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T12:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T12:35:00.000Z
+             */
+            confirmedAt: string | null;
+        };
+        Invoice: {
+            /** @example clx1abc123def456 */
+            id: string;
+            /** @example 99.99 */
+            amount: number;
+            /** @example USD */
+            currency: string;
+            /** @example 0.0025 */
+            amountCrypto: number | null;
+            /** @example 0 */
+            amountReceived: number;
+            /**
+             * @example PENDING
+             * @enum {string}
+             */
+            status: "PENDING" | "AWAITING" | "PAID" | "EXPIRED" | "PARTIAL" | "UNDERPAID" | "OVERPAID";
+            asset: components["schemas"]["InvoiceAsset"];
+            /** @example 0x1234... */
+            paymentAddress: string | null;
+            /** @example ORD-12345 */
+            orderId: string | null;
+            /** @example customer@example.com */
+            customerEmail: string | null;
+            metadata: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T12:00:00.000Z
+             */
+            expiresAt: string | null;
+            /**
+             * Format: date-time
+             * @example null
+             */
+            paidAt: string | null;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T11:00:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T11:00:00.000Z
+             */
+            updatedAt: string;
+            /**
+             * Format: uri
+             * @example https://pay.paycoinpro.com/pay/clx1abc123
+             */
+            paymentUrl: string;
+            transactions?: components["schemas"]["Transaction"][];
+        };
+        InvoiceCreated: {
+            /** @example clx1abc123def456 */
+            id: string;
+            /** @example 99.99 */
+            amount: number;
+            /** @example USD */
+            currency: string;
+            /**
+             * @example PENDING
+             * @enum {string}
+             */
+            status: "PENDING" | "AWAITING" | "PAID" | "EXPIRED" | "PARTIAL" | "UNDERPAID" | "OVERPAID";
+            /** @example ORD-12345 */
+            orderId: string | null;
+            /** @example customer@example.com */
+            customerEmail: string | null;
+            /** @example Order #12345 */
+            title: string | null;
+            /** @example Payment for premium subscription */
+            description: string | null;
+            /** @example https://yoursite.com/success */
+            successUrl: string | null;
+            /** @example https://yoursite.com/cancel */
+            cancelUrl: string | null;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T12:00:00.000Z
+             */
+            expiresAt: string | null;
+            /**
+             * Format: uri
+             * @example https://pay.paycoinpro.com/pay/clx1abc123
+             */
+            paymentUrl: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T11:00:00.000Z
+             */
+            createdAt: string;
+        };
+        Pagination: {
+            /** @example 100 */
+            total: number;
+            /** @example 20 */
+            limit: number;
+            /** @example 0 */
+            offset: number;
+            /** @example true */
+            hasMore: boolean;
+        };
+        InvoiceListResponse: {
+            invoices: components["schemas"]["Invoice"][];
+            pagination: components["schemas"]["Pagination"];
+        };
+        ErrorResponse: {
+            /** @example Invalid or missing API key */
+            error: string;
+            /** @example UNAUTHORIZED */
+            code: string;
+            details?: unknown;
+        };
+        CreateDepositAddressRequest: {
+            /**
+             * @description Asset symbol (e.g., usdt, btc, eth)
+             * @example usdt
+             */
+            asset: string;
+            /**
+             * @description Network code (e.g., ethereum, bsc, polygon, tron)
+             * @example bsc
+             */
+            network: string;
+            /**
+             * @description External user identifier for tracking deposits per customer. Max 255 characters.
+             * @example user_123
+             */
+            externalUserId?: string;
+            /**
+             * @description Number of days until address expires (1-365). Default: 30. Set to null for never expires.
+             * @example 30
+             */
+            expiryDays?: number;
+        };
+        DepositAddress: {
+            /** @example depaddr_cly1234567890 */
+            id: string;
+            /** @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00 */
+            address: string;
+            /**
+             * @example ACTIVE
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+            /**
+             * @description External user identifier for tracking deposits
+             * @example user_123
+             */
+            externalUserId: string | null;
+            asset: {
+                /** @example asset_usdt_bsc */
+                id: string;
+                /** @example USDT */
+                symbol: string;
+                /** @example Tether USD */
+                name: string;
+                /** @example 18 */
+                decimals: number;
+            };
+            network: {
+                /** @example network_bsc */
+                id: string;
+                /** @example BSC */
+                code: string;
+                /** @example BNB Smart Chain */
+                name: string;
+            };
+            /** @example 1250.50 */
+            totalReceived: string;
+            /** @example 15 */
+            paymentCount: number;
+            /**
+             * Format: date-time
+             * @example 2025-12-22T09:15:00.000Z
+             */
+            lastPaymentAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the address expires (null = never)
+             * @example 2026-01-01T10:30:00.000Z
+             */
+            expiresAt: string | null;
+            /**
+             * Format: date-time
+             * @example 2025-12-01T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        DepositAddressCreated: {
+            /** @example depaddr_cly1234567890 */
+            id: string;
+            /** @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00 */
+            address: string;
+            /**
+             * @example ACTIVE
+             * @enum {string}
+             */
+            status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+            /**
+             * @description External user identifier for tracking deposits
+             * @example user_123
+             */
+            externalUserId: string | null;
+            asset: {
+                /** @example asset_usdt_bsc */
+                id: string;
+                /** @example USDT */
+                symbol: string;
+                /** @example Tether USD */
+                name: string;
+                /** @example 18 */
+                decimals: number;
+            };
+            network: {
+                /** @example network_bsc */
+                id: string;
+                /** @example BSC */
+                code: string;
+                /** @example BNB Smart Chain */
+                name: string;
+            };
+            /** @example 0 */
+            totalReceived: string;
+            /** @example 0 */
+            paymentCount: number;
+            /**
+             * Format: date-time
+             * @description When the address expires (null = never)
+             * @example 2026-01-01T10:30:00.000Z
+             */
+            expiresAt: string | null;
+            /**
+             * Format: date-time
+             * @example 2025-12-22T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        DepositAddressListResponse: {
+            addresses: components["schemas"]["DepositAddress"][];
+            pagination: components["schemas"]["Pagination"];
+        };
+        Deposit: {
+            /** @example dep_abc123xyz */
+            id: string;
+            /** @example depaddr_cly1234567890 */
+            depositAddressId: string;
+            /** @example 0x1234567890abcdef... */
+            txHash: string;
+            /** @example 100.50 */
+            amount: string;
+            /** @example 99.495 */
+            netAmount: string;
+            /** @example 1.005 */
+            feeAmount: string;
+            /** @example 1.0 */
+            feePercent: string;
+            /**
+             * @example CONFIRMED
+             * @enum {string}
+             */
+            status: "PENDING" | "CONFIRMED" | "SWEPT" | "FAILED";
+            /** @example 12 */
+            confirmations: number;
+            asset: {
+                /** @example USDT */
+                symbol: string;
+                /** @example Tether USD */
+                name: string;
+            };
+            network: {
+                /** @example BSC */
+                code: string;
+                /** @example BNB Smart Chain */
+                name: string;
+            };
+            /**
+             * Format: date-time
+             * @example 2025-12-22T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2025-12-22T10:31:00.000Z
+             */
+            confirmedAt: string | null;
+        };
+        DepositListResponse: {
+            deposits: components["schemas"]["Deposit"][];
+            pagination: {
+                /** @example dep_def456abc */
+                nextCursor: string | null;
+                /** @example true */
+                hasMore: boolean;
+            };
+        };
+        InvoiceWebhookPayload: {
+            /**
+             * @description Event type - always "invoice" for invoice webhooks
+             * @example invoice
+             * @enum {string}
+             */
+            event: "invoice";
+            /** @example clx1abc123def456 */
+            invoiceId: string;
+            /** @example ORD-12345 */
+            orderId: string | null;
+            /**
+             * @description Invoice status: PAID, UNDERPAID, OVERPAID, PARTIAL, EXPIRED
+             * @example PAID
+             * @enum {string}
+             */
+            status: "PAID" | "UNDERPAID" | "OVERPAID" | "PARTIAL" | "EXPIRED";
+            /**
+             * @description Address where payment was received
+             * @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00
+             */
+            depositAddress: string;
+            /**
+             * @description Address that sent the payment (may be null)
+             * @example 0x9876543210fedcba9876543210fedcba98765432
+             */
+            senderAddress: string | null;
+            /** @example 0x1234567890abcdef... */
+            txHash: string;
+            /**
+             * @description Amount received in crypto
+             * @example 100.5
+             */
+            amountReceived: number;
+            /**
+             * @description Expected amount in crypto
+             * @example 100
+             */
+            amountExpected: number | null;
+            /** @example USDT */
+            cryptoSymbol: string | null;
+            /** @example BSC */
+            network: string | null;
+            /** @example BNB Smart Chain */
+            networkName: string | null;
+            /**
+             * @description Invoice amount in fiat
+             * @example 99.99
+             */
+            amountFiat: number;
+            /** @example USD */
+            fiatCurrency: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T12:30:00.000Z
+             */
+            timestamp: string;
+        };
+        DepositWebhookPayload: {
+            /**
+             * @description Event type - always "deposit" for deposit webhooks
+             * @example deposit
+             * @enum {string}
+             */
+            event: "deposit";
+            /**
+             * @description Deposit status: CONFIRMED
+             * @example CONFIRMED
+             * @enum {string}
+             */
+            status: "CONFIRMED";
+            /**
+             * @description Address where deposit was received
+             * @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00
+             */
+            depositAddress: string;
+            /**
+             * @description External user identifier (if provided when creating the address)
+             * @example user_123
+             */
+            externalUserId: string | null;
+            /**
+             * @description Address that sent the deposit (may be null)
+             * @example 0x9876543210fedcba9876543210fedcba98765432
+             */
+            senderAddress: string | null;
+            /** @example 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef */
+            txHash: string;
+            /**
+             * @description Amount received in crypto
+             * @example 100.5
+             */
+            amount: number;
+            /**
+             * @description Equivalent amount in USD (may be null if price unavailable)
+             * @example 100.5
+             */
+            amountFiat: number;
+            /** @example USDT */
+            cryptoSymbol: string;
+            /** @example BSC */
+            network: string;
+            /** @example BNB Smart Chain */
+            networkName: string;
+            /**
+             * Format: date-time
+             * @example 2025-12-22T10:31:00.000Z
+             */
+            timestamp: string;
+        };
+        AssetNetwork: {
+            /**
+             * @description Network code for API calls
+             * @example ethereum
+             */
+            code: string;
+            /**
+             * @description Display name of the network
+             * @example Ethereum
+             */
+            name: string;
+        };
+        Asset: {
+            /**
+             * @description Asset symbol
+             * @example USDT
+             */
+            symbol: string;
+            /**
+             * @description Asset name
+             * @example Tether USD
+             */
+            name: string;
+            /**
+             * @description Full URL to asset icon
+             * @example https://paycoinpro.com/icons/usdt.png
+             */
+            iconUrl: string | null;
+            /** @description Supported networks for this asset */
+            networks: components["schemas"]["AssetNetwork"][];
+        };
+        AssetListResponse: {
+            assets: components["schemas"]["Asset"][];
+        };
     };
-    Network: {
-      /** @example BSC */
-      code: string;
-      /** @example BNB Smart Chain */
-      name: string;
-    };
-    InvoiceAsset: {
-      /** @example USDT */
-      symbol: string;
-      /** @example Tether USD */
-      name: string;
-      /** @example 18 */
-      decimals: number;
-      /** @example https://... */
-      iconUrl: string | null;
-      network: components['schemas']['Network'];
-    } | null;
-    Transaction: {
-      /** @example tx_abc123 */
-      id: string;
-      /** @example 0xabc123... */
-      txHash: string | null;
-      /** @example 0.0025 */
-      amount: number;
-      /** @example CONFIRMED */
-      status: string;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T12:30:00.000Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T12:35:00.000Z
-       */
-      confirmedAt: string | null;
-    };
-    Invoice: {
-      /** @example clx1abc123def456 */
-      id: string;
-      /** @example 99.99 */
-      amount: number;
-      /** @example USD */
-      currency: string;
-      /** @example 0.0025 */
-      amountCrypto: number | null;
-      /** @example 0 */
-      amountReceived: number;
-      /**
-       * @example PENDING
-       * @enum {string}
-       */
-      status: 'PENDING' | 'AWAITING' | 'PAID' | 'EXPIRED' | 'PARTIAL' | 'UNDERPAID' | 'OVERPAID';
-      asset: components['schemas']['InvoiceAsset'];
-      /** @example 0x1234... */
-      paymentAddress: string | null;
-      /** @example ORD-12345 */
-      orderId: string | null;
-      /** @example customer@example.com */
-      customerEmail: string | null;
-      metadata: {
-        [key: string]: unknown;
-      } | null;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T12:00:00.000Z
-       */
-      expiresAt: string | null;
-      /**
-       * Format: date-time
-       * @example null
-       */
-      paidAt: string | null;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T11:00:00.000Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T11:00:00.000Z
-       */
-      updatedAt: string;
-      /**
-       * Format: uri
-       * @example https://pay.paycoinpro.com/pay/clx1abc123
-       */
-      paymentUrl: string;
-      transactions?: components['schemas']['Transaction'][];
-    };
-    InvoiceCreated: {
-      /** @example clx1abc123def456 */
-      id: string;
-      /** @example 99.99 */
-      amount: number;
-      /** @example USD */
-      currency: string;
-      /**
-       * @example PENDING
-       * @enum {string}
-       */
-      status: 'PENDING' | 'AWAITING' | 'PAID' | 'EXPIRED' | 'PARTIAL' | 'UNDERPAID' | 'OVERPAID';
-      /** @example ORD-12345 */
-      orderId: string | null;
-      /** @example customer@example.com */
-      customerEmail: string | null;
-      /** @example Order #12345 */
-      title: string | null;
-      /** @example Payment for premium subscription */
-      description: string | null;
-      /** @example https://yoursite.com/success */
-      successUrl: string | null;
-      /** @example https://yoursite.com/cancel */
-      cancelUrl: string | null;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T12:00:00.000Z
-       */
-      expiresAt: string | null;
-      /**
-       * Format: uri
-       * @example https://pay.paycoinpro.com/pay/clx1abc123
-       */
-      paymentUrl: string;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T11:00:00.000Z
-       */
-      createdAt: string;
-    };
-    Pagination: {
-      /** @example 100 */
-      total: number;
-      /** @example 20 */
-      limit: number;
-      /** @example 0 */
-      offset: number;
-      /** @example true */
-      hasMore: boolean;
-    };
-    InvoiceListResponse: {
-      invoices: components['schemas']['Invoice'][];
-      pagination: components['schemas']['Pagination'];
-    };
-    ErrorResponse: {
-      /** @example Invalid or missing API key */
-      error: string;
-      /** @example UNAUTHORIZED */
-      code: string;
-      details?: unknown;
-    };
-    CreateDepositAddressRequest: {
-      /**
-       * @description Asset symbol (e.g., usdt, btc, eth)
-       * @example usdt
-       */
-      asset: string;
-      /**
-       * @description Network code (e.g., ethereum, bsc, polygon, tron)
-       * @example bsc
-       */
-      network: string;
-      /**
-       * @description External user identifier for tracking deposits per customer. Max 255 characters.
-       * @example user_123
-       */
-      externalUserId?: string;
-      /**
-       * @description Number of days until address expires (1-365). Default: 30. Set to null for never expires.
-       * @example 30
-       */
-      expiryDays?: number;
-    };
-    DepositAddress: {
-      /** @example depaddr_cly1234567890 */
-      id: string;
-      /** @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00 */
-      address: string;
-      /**
-       * @example ACTIVE
-       * @enum {string}
-       */
-      status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-      /**
-       * @description External user identifier for tracking deposits
-       * @example user_123
-       */
-      externalUserId: string | null;
-      asset: {
-        /** @example asset_usdt_bsc */
-        id: string;
-        /** @example USDT */
-        symbol: string;
-        /** @example Tether USD */
-        name: string;
-        /** @example 18 */
-        decimals: number;
-      };
-      network: {
-        /** @example network_bsc */
-        id: string;
-        /** @example BSC */
-        code: string;
-        /** @example BNB Smart Chain */
-        name: string;
-      };
-      /** @example 1250.50 */
-      totalReceived: string;
-      /** @example 15 */
-      paymentCount: number;
-      /**
-       * Format: date-time
-       * @example 2025-12-22T09:15:00.000Z
-       */
-      lastPaymentAt: string | null;
-      /**
-       * Format: date-time
-       * @description When the address expires (null = never)
-       * @example 2026-01-01T10:30:00.000Z
-       */
-      expiresAt: string | null;
-      /**
-       * Format: date-time
-       * @example 2025-12-01T10:30:00.000Z
-       */
-      createdAt: string;
-    };
-    DepositAddressCreated: {
-      /** @example depaddr_cly1234567890 */
-      id: string;
-      /** @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00 */
-      address: string;
-      /**
-       * @example ACTIVE
-       * @enum {string}
-       */
-      status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
-      /**
-       * @description External user identifier for tracking deposits
-       * @example user_123
-       */
-      externalUserId: string | null;
-      asset: {
-        /** @example asset_usdt_bsc */
-        id: string;
-        /** @example USDT */
-        symbol: string;
-        /** @example Tether USD */
-        name: string;
-        /** @example 18 */
-        decimals: number;
-      };
-      network: {
-        /** @example network_bsc */
-        id: string;
-        /** @example BSC */
-        code: string;
-        /** @example BNB Smart Chain */
-        name: string;
-      };
-      /** @example 0 */
-      totalReceived: string;
-      /** @example 0 */
-      paymentCount: number;
-      /**
-       * Format: date-time
-       * @description When the address expires (null = never)
-       * @example 2026-01-01T10:30:00.000Z
-       */
-      expiresAt: string | null;
-      /**
-       * Format: date-time
-       * @example 2025-12-22T10:30:00.000Z
-       */
-      createdAt: string;
-    };
-    DepositAddressListResponse: {
-      addresses: components['schemas']['DepositAddress'][];
-      pagination: components['schemas']['Pagination'];
-    };
-    Deposit: {
-      /** @example dep_abc123xyz */
-      id: string;
-      /** @example depaddr_cly1234567890 */
-      depositAddressId: string;
-      /** @example 0x1234567890abcdef... */
-      txHash: string;
-      /** @example 100.50 */
-      amount: string;
-      /** @example 99.495 */
-      netAmount: string;
-      /** @example 1.005 */
-      feeAmount: string;
-      /** @example 1.0 */
-      feePercent: string;
-      /**
-       * @example CONFIRMED
-       * @enum {string}
-       */
-      status: 'PENDING' | 'CONFIRMED' | 'SWEPT' | 'FAILED';
-      /** @example 12 */
-      confirmations: number;
-      asset: {
-        /** @example USDT */
-        symbol: string;
-        /** @example Tether USD */
-        name: string;
-      };
-      network: {
-        /** @example BSC */
-        code: string;
-        /** @example BNB Smart Chain */
-        name: string;
-      };
-      /**
-       * Format: date-time
-       * @example 2025-12-22T10:30:00.000Z
-       */
-      createdAt: string;
-      /**
-       * Format: date-time
-       * @example 2025-12-22T10:31:00.000Z
-       */
-      confirmedAt: string | null;
-    };
-    DepositListResponse: {
-      deposits: components['schemas']['Deposit'][];
-      pagination: {
-        /** @example dep_def456abc */
-        nextCursor: string | null;
-        /** @example true */
-        hasMore: boolean;
-      };
-    };
-    InvoiceWebhookPayload: {
-      /**
-       * @description Event type - always "invoice" for invoice webhooks
-       * @example invoice
-       * @enum {string}
-       */
-      event: 'invoice';
-      /** @example clx1abc123def456 */
-      invoiceId: string;
-      /** @example ORD-12345 */
-      orderId: string | null;
-      /**
-       * @description Invoice status: PAID, UNDERPAID, OVERPAID, PARTIAL, EXPIRED
-       * @example PAID
-       * @enum {string}
-       */
-      status: 'PAID' | 'UNDERPAID' | 'OVERPAID' | 'PARTIAL' | 'EXPIRED';
-      /**
-       * @description Address where payment was received
-       * @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00
-       */
-      depositAddress: string;
-      /**
-       * @description Address that sent the payment (may be null)
-       * @example 0x9876543210fedcba9876543210fedcba98765432
-       */
-      senderAddress: string | null;
-      /** @example 0x1234567890abcdef... */
-      txHash: string;
-      /**
-       * @description Amount received in crypto
-       * @example 100.5
-       */
-      amountReceived: number;
-      /**
-       * @description Expected amount in crypto
-       * @example 100
-       */
-      amountExpected: number | null;
-      /** @example USDT */
-      cryptoSymbol: string | null;
-      /** @example BSC */
-      network: string | null;
-      /** @example BNB Smart Chain */
-      networkName: string | null;
-      /**
-       * @description Invoice amount in fiat
-       * @example 99.99
-       */
-      amountFiat: number;
-      /** @example USD */
-      fiatCurrency: string;
-      /**
-       * Format: date-time
-       * @example 2024-01-15T12:30:00.000Z
-       */
-      timestamp: string;
-    };
-    DepositWebhookPayload: {
-      /**
-       * @description Event type - always "deposit" for deposit webhooks
-       * @example deposit
-       * @enum {string}
-       */
-      event: 'deposit';
-      /**
-       * @description Deposit status: CONFIRMED
-       * @example CONFIRMED
-       * @enum {string}
-       */
-      status: 'CONFIRMED';
-      /**
-       * @description Address where deposit was received
-       * @example 0x742d35Cc6634C0532925a3b844Bc9e7595f8fE00
-       */
-      depositAddress: string;
-      /**
-       * @description External user identifier (if provided when creating the address)
-       * @example user_123
-       */
-      externalUserId: string | null;
-      /**
-       * @description Address that sent the deposit (may be null)
-       * @example 0x9876543210fedcba9876543210fedcba98765432
-       */
-      senderAddress: string | null;
-      /** @example 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef */
-      txHash: string;
-      /**
-       * @description Amount received in crypto
-       * @example 100.5
-       */
-      amount: number;
-      /**
-       * @description Equivalent amount in USD (may be null if price unavailable)
-       * @example 100.5
-       */
-      amountFiat: number | null;
-      /** @example USDT */
-      cryptoSymbol: string;
-      /** @example BSC */
-      network: string;
-      /** @example BNB Smart Chain */
-      networkName: string;
-      /**
-       * Format: date-time
-       * @example 2025-12-22T10:31:00.000Z
-       */
-      timestamp: string;
-    };
-    AssetNetwork: {
-      /**
-       * @description Network code for API calls
-       * @example ethereum
-       */
-      code: string;
-      /**
-       * @description Display name of the network
-       * @example Ethereum
-       */
-      name: string;
-    };
-    Asset: {
-      /**
-       * @description Asset symbol
-       * @example USDT
-       */
-      symbol: string;
-      /**
-       * @description Asset name
-       * @example Tether USD
-       */
-      name: string;
-      /**
-       * @description Full URL to asset icon
-       * @example https://paycoinpro.com/icons/usdt.png
-       */
-      iconUrl: string | null;
-      /** @description Supported networks for this asset */
-      networks: components['schemas']['AssetNetwork'][];
-    };
-    AssetListResponse: {
-      assets: components['schemas']['Asset'][];
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;
