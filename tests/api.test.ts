@@ -24,7 +24,7 @@ describe('APIClient', () => {
   it('should make GET request with correct headers', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ data: { id: '123' } }),
+      json: () => Promise.resolve({ id: '123' }),
     });
 
     const client = createClient();
@@ -45,7 +45,7 @@ describe('APIClient', () => {
   it('should make POST request with body', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ data: { id: 'inv_123' } }),
+      json: () => Promise.resolve({ id: 'inv_123' }),
     });
 
     const client = createClient();
@@ -89,7 +89,7 @@ describe('APIClient', () => {
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ data: { id: '123' } }),
+        json: () => Promise.resolve({ id: '123' }),
       });
 
     const client = createClient({ maxRetries: 1 });

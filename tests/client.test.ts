@@ -8,7 +8,7 @@ describe('PayCoinPro Client', () => {
     expect(client.invoices).toBeDefined();
     expect(client.depositAddresses).toBeDefined();
     expect(client.deposits).toBeDefined();
-    expect(client.withdrawals).toBeDefined();
+    expect(client.assets).toBeDefined();
   });
 
   it('should throw error when API key is missing', () => {
