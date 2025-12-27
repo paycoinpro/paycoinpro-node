@@ -1,7 +1,11 @@
 /**
  * PayCoinPro SDK Types
+ *
+ * Types are auto-generated from OpenAPI spec.
+ * Run `npm run generate` to update.
  */
 
+// SDK Configuration (not from API)
 export interface PayCoinProOptions {
   apiKey: string;
   baseURL?: string;
@@ -12,151 +16,6 @@ export interface PayCoinProOptions {
   defaultHeaders?: Record<string, string>;
 }
 
-export type Currency = 'USDT' | 'USDC' | 'BTC' | 'ETH' | 'BNB' | 'TRX' | string;
-
-export type Network = 'ethereum' | 'bsc' | 'tron' | 'polygon' | 'arbitrum' | 'bitcoin' | string;
-
-export type InvoiceStatus = 'pending' | 'processing' | 'completed' | 'expired' | 'cancelled' | 'underpaid' | 'overpaid';
-
-export type WithdrawalStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-
-export type DepositStatus = 'pending' | 'confirmed' | 'completed';
-
-export interface PaginationParams {
-  limit?: number;
-  offset?: number;
-  cursor?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  hasMore: boolean;
-  total?: number;
-}
-
-// Invoices
-export interface Invoice {
-  id: string;
-  amount: number;
-  currency: Currency;
-  network: Network;
-  status: InvoiceStatus;
-  orderId?: string;
-  description?: string;
-  paymentAddress: string;
-  paymentAmount: number;
-  paidAmount: number;
-  redirectUrl?: string;
-  webhookUrl?: string;
-  expiresAt: string;
-  createdAt: string;
-  updatedAt: string;
-  metadata?: Record<string, unknown>;
-}
-
-export interface InvoiceCreateParams {
-  amount: number;
-  currency: Currency;
-  network: Network;
-  orderId?: string;
-  description?: string;
-  redirectUrl?: string;
-  webhookUrl?: string;
-  expiresIn?: number;
-  metadata?: Record<string, unknown>;
-}
-
-export interface InvoiceListParams extends PaginationParams {
-  status?: InvoiceStatus;
-  currency?: Currency;
-  orderId?: string;
-  createdAfter?: string | Date;
-  createdBefore?: string | Date;
-}
-
-// Deposit Addresses
-export interface DepositAddress {
-  id: string;
-  address: string;
-  asset: Currency;
-  network: Network;
-  label?: string;
-  createdAt: string;
-}
-
-export interface DepositAddressCreateParams {
-  asset: Currency;
-  network: Network;
-  label?: string;
-}
-
-export interface DepositAddressListParams extends PaginationParams {
-  asset?: Currency;
-  network?: Network;
-}
-
-// Deposits
-export interface Deposit {
-  id: string;
-  txHash: string;
-  address: string;
-  amount: number;
-  asset: Currency;
-  network: Network;
-  status: DepositStatus;
-  confirmations: number;
-  requiredConfirmations: number;
-  createdAt: string;
-  confirmedAt?: string;
-}
-
-export interface DepositListParams extends PaginationParams {
-  asset?: Currency;
-  network?: Network;
-  status?: DepositStatus;
-  address?: string;
-  createdAfter?: string | Date;
-  createdBefore?: string | Date;
-}
-
-// Withdrawals
-export interface Withdrawal {
-  id: string;
-  amount: number;
-  fee: number;
-  asset: Currency;
-  network: Network;
-  address: string;
-  txHash?: string;
-  status: WithdrawalStatus;
-  memo?: string;
-  createdAt: string;
-  completedAt?: string;
-}
-
-export interface WithdrawalCreateParams {
-  amount: number;
-  asset: Currency;
-  network: Network;
-  address: string;
-  memo?: string;
-}
-
-export interface WithdrawalListParams extends PaginationParams {
-  asset?: Currency;
-  network?: Network;
-  status?: WithdrawalStatus;
-  createdAfter?: string | Date;
-  createdBefore?: string | Date;
-}
-
-// API
-export interface APIResponse<T> {
-  success: boolean;
-  data: T;
-  error?: { code: string; message: string };
-}
-
 export interface RequestOptions {
   timeout?: number;
   maxRetries?: number;
@@ -164,3 +23,46 @@ export interface RequestOptions {
   signal?: AbortSignal;
   idempotencyKey?: string;
 }
+
+// Internal API response wrapper
+export interface APIResponse<T> {
+  success: boolean;
+  data: T;
+  error?: { code: string; message: string };
+}
+
+// Re-export all auto-generated OpenAPI types
+export type { paths, components, operations } from './openapi.js';
+
+// Convenience type aliases from OpenAPI schemas
+import type { components } from './openapi.js';
+
+// Invoices
+export type Invoice = components['schemas']['Invoice'];
+export type InvoiceCreated = components['schemas']['InvoiceCreated'];
+export type CreateInvoiceRequest = components['schemas']['CreateInvoiceRequest'];
+export type InvoiceListResponse = components['schemas']['InvoiceListResponse'];
+export type InvoiceStatus = Invoice['status'];
+
+// Deposit Addresses
+export type DepositAddress = components['schemas']['DepositAddress'];
+export type DepositAddressCreated = components['schemas']['DepositAddressCreated'];
+export type CreateDepositAddressRequest = components['schemas']['CreateDepositAddressRequest'];
+export type DepositAddressListResponse = components['schemas']['DepositAddressListResponse'];
+
+// Deposits
+export type Deposit = components['schemas']['Deposit'];
+export type DepositListResponse = components['schemas']['DepositListResponse'];
+
+// Assets
+export type Asset = components['schemas']['Asset'];
+export type AssetNetwork = components['schemas']['AssetNetwork'];
+export type AssetListResponse = components['schemas']['AssetListResponse'];
+
+// Webhooks
+export type WebhookPayload = components['schemas']['WebhookPayload'];
+export type DepositWebhookPayload = components['schemas']['DepositWebhookPayload'];
+
+// Common
+export type Pagination = components['schemas']['Pagination'];
+export type ErrorResponse = components['schemas']['ErrorResponse'];
