@@ -87,16 +87,14 @@ Verify webhooks using the built-in helper:
 ```typescript
 import PayCoinPro, { WebhookVerificationError } from 'paycoinpro';
 
-const client = new PayCoinPro({
-  apiKey: 'pk_live_...',
-  webhookSecret: 'whsec_...',
-});
+const client = new PayCoinPro({ apiKey: 'pk_live_...' });
 
 app.post('/webhooks', (req, res) => {
   try {
     const event = client.webhooks.verify(
       req.body,
-      req.headers['x-payload-hash']
+      req.headers['x-payload-hash'],
+      process.env.WEBHOOK_SECRET
     );
 
     switch (event.event) {

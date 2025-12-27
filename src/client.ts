@@ -26,7 +26,7 @@ export class PayCoinPro {
     this.depositAddresses = new DepositAddresses(client);
     this.deposits = new Deposits(client);
     this.assets = new Assets(client);
-    this.webhooks = new Webhooks(options.webhookSecret ?? '');
+    this.webhooks = new Webhooks();
   }
 }
 
