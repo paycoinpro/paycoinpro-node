@@ -197,7 +197,7 @@ export interface paths {
                          *         {
                          *           "symbol": "USDT",
                          *           "name": "Tether USD",
-                         *           "iconUrl": "https://paycoinpro.com/icons/usdt.png",
+                         *           "iconUrl": "https://paycoinpro.com/icons/usdt.svg",
                          *           "networks": [
                          *             {
                          *               "code": "ethereum",
@@ -220,7 +220,7 @@ export interface paths {
                          *         {
                          *           "symbol": "BTC",
                          *           "name": "Bitcoin",
-                         *           "iconUrl": "https://paycoinpro.com/icons/btc.png",
+                         *           "iconUrl": "https://paycoinpro.com/icons/btc.svg",
                          *           "networks": [
                          *             {
                          *               "code": "bitcoin",
@@ -231,7 +231,7 @@ export interface paths {
                          *         {
                          *           "symbol": "ETH",
                          *           "name": "Ethereum",
-                         *           "iconUrl": "https://paycoinpro.com/icons/eth.png",
+                         *           "iconUrl": "https://paycoinpro.com/icons/eth.svg",
                          *           "networks": [
                          *             {
                          *               "code": "ethereum",
@@ -634,11 +634,10 @@ export interface components {
              */
             amount: number;
             /**
-             * @description Fiat currency code (default: USD)
-             * @default USD
+             * @description Fiat currency code (optional, defaults to USD if not provided)
              * @example USD
              */
-            currency: string;
+            currency?: string;
             /**
              * @description Your internal order reference
              * @example ORD-12345

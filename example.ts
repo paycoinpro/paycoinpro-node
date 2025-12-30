@@ -1,14 +1,18 @@
-import PayCoinPro from 'paycoinpro';
+import { PayCoinPro } from 'paycoinpro';
 
 const client = new PayCoinPro({
   apiKey: 'pk_live_your_api_key',
 });
 
 async function main() {
+
+  // Assets List
+  const assets = await client.assets.list();
+  console.log('Assets:', assets.assets);
+
   // Create an invoice
   const invoice = await client.invoices.create({
     amount: 99.99,
-    currency: 'USD',
     orderId: 'ORD-123',
     callbackUrl: 'https://yoursite.com/webhooks',
   });
