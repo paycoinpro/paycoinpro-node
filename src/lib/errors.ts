@@ -1,8 +1,23 @@
 /**
- * PayCoinPro SDK Errors
+ * PayCoinPro SDK errors.
+ *
+ * Every non-2xx response becomes a PayCoinProAPIError carrying the V2 error
+ * envelope verbatim. Retry classification is exposed, never acted on — a
+ * mutation is only safe to retry with the caller's stable idempotency key.
  */
 
+import type { ApiErrorCode } from '../types/index.js';
+
+export interface ApiErrorDetail {
+  path: string;
+  code: string;
+  message: string;
+}
+
 export class PayCoinProError extends Error {
+  /** Whether retrying the identical request could succeed. */
+  readonly retryable: boolean = false;
+
   constructor(message: string) {
     super(message);
     this.name = 'PayCoinProError';
@@ -10,77 +25,79 @@ export class PayCoinProError extends Error {
   }
 }
 
-export class APIError extends PayCoinProError {
+/** Codes where retrying the identical request can succeed. */
+const RETRYABLE_CODES: ReadonlySet<string> = new Set([
+  'PEV2_RATE_LIMITED',
+  'PEV2_KILL_SWITCH_ACTIVE',
+  'PEV2_INTERNAL',
+]);
+
+export class PayCoinProAPIError extends PayCoinProError {
   readonly status: number;
-  readonly code: string;
-  readonly details?: unknown;
+  readonly code: ApiErrorCode;
+  readonly requestId: string;
+  readonly details: readonly ApiErrorDetail[];
+  override readonly retryable: boolean;
 
-  constructor(message: string, status: number, code: string = 'api_error', details?: unknown) {
-    super(message);
-    this.name = 'APIError';
-    this.status = status;
-    this.code = code;
-    this.details = details;
+  constructor(input: {
+    status: number;
+    code: ApiErrorCode;
+    message: string;
+    requestId: string;
+    details?: readonly ApiErrorDetail[];
+  }) {
+    super(`${input.message} (${input.code}, request ${input.requestId})`);
+    this.name = 'PayCoinProAPIError';
+    this.status = input.status;
+    this.code = input.code;
+    this.requestId = input.requestId;
+    this.details = input.details ?? [];
+    this.retryable = RETRYABLE_CODES.has(input.code) || input.status >= 500;
   }
 
-  static fromResponse(status: number, error?: { code?: string; message?: string; details?: unknown }): APIError {
-    const message = error?.message ?? `Request failed with status ${status}`;
-    const code = error?.code ?? 'unknown_error';
-    const details = error?.details;
+  /**
+   * Build from a response body. Tolerates a non-conforming body: a proxy or
+   * gateway can return HTML, and that must not crash the caller.
+   */
+  static fromResponse(status: number, body: unknown): PayCoinProAPIError {
+    const envelope = (body ?? {}) as Partial<{
+      code: ApiErrorCode;
+      message: string;
+      requestId: string;
+      details: ApiErrorDetail[];
+    }>;
 
-    switch (status) {
-      case 400:
-        return new BadRequestError(message, code, details);
-      case 401:
-        return new AuthenticationError(message, code);
-      case 404:
-        return new NotFoundError(message, code);
-      case 429:
-        return new RateLimitError(message, code);
-      default:
-        return new APIError(message, status, code, details);
-    }
-  }
-}
-
-export class BadRequestError extends APIError {
-  constructor(message: string, code: string = 'bad_request', details?: unknown) {
-    super(message, 400, code, details);
-    this.name = 'BadRequestError';
-  }
-}
-
-export class AuthenticationError extends APIError {
-  constructor(message: string, code: string = 'authentication_error') {
-    super(message, 401, code);
-    this.name = 'AuthenticationError';
-  }
-}
-
-export class NotFoundError extends APIError {
-  constructor(message: string, code: string = 'not_found') {
-    super(message, 404, code);
-    this.name = 'NotFoundError';
-  }
-}
-
-export class RateLimitError extends APIError {
-  constructor(message: string, code: string = 'rate_limit') {
-    super(message, 429, code);
-    this.name = 'RateLimitError';
+    return new PayCoinProAPIError({
+      status,
+      code: envelope.code ?? 'PEV2_INTERNAL',
+      message: envelope.message ?? `Request failed with status ${status}`,
+      requestId: envelope.requestId ?? 'req_unknown',
+      details: envelope.details,
+    });
   }
 }
 
 export class TimeoutError extends PayCoinProError {
-  constructor(message: string = 'Request timed out') {
+  override readonly retryable = true;
+
+  constructor(message = 'Request timed out') {
     super(message);
     this.name = 'TimeoutError';
   }
 }
 
 export class ConnectionError extends PayCoinProError {
-  constructor(message: string = 'Connection failed') {
+  override readonly retryable = true;
+
+  constructor(message = 'Connection failed') {
     super(message);
     this.name = 'ConnectionError';
+  }
+}
+
+export class WebhookVerificationError extends PayCoinProError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'WebhookVerificationError';
   }
 }

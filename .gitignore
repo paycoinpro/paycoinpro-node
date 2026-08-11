@@ -34,3 +34,6 @@ guide.md
 # yarn.lock
 # pnpm-lock.yaml
 gudie.md
+
+# macOS AppleDouble files (exFAT volumes)
+._*
