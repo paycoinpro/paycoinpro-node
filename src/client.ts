@@ -1,32 +1,49 @@
-/**
- * PayCoinPro Client
- */
-
-import type { PayCoinProOptions } from './types/index.js';
 import { APIClient } from './lib/api.js';
-import { Invoices } from './resources/invoices.js';
-import { DepositAddresses } from './resources/deposit-addresses.js';
-import { Deposits } from './resources/deposits.js';
 import { Assets } from './resources/assets.js';
+import { Balances } from './resources/balances.js';
+import { Checkouts } from './resources/checkouts.js';
+import { Invoices } from './resources/invoices.js';
+import { Ledger } from './resources/ledger.js';
+import { WebhookEndpoints } from './resources/webhook-endpoints.js';
 import { Webhooks } from './resources/webhooks.js';
+import type { PayCoinProOptions } from './types/index.js';
 
 /**
- * PayCoinPro SDK Client
+ * PayCoinPro merchant client for Payment Engine V2.
+ *
+ * Holds only the `ck_*` merchant key. Payouts live on PayCoinProPayouts,
+ * which takes the separately scoped `pc_*` credential.
  */
 export class PayCoinPro {
-  readonly invoices: Invoices;
-  readonly depositAddresses: DepositAddresses;
-  readonly deposits: Deposits;
   readonly assets: Assets;
+  readonly invoices: Invoices;
+  readonly checkouts: Checkouts;
+  readonly webhookEndpoints: WebhookEndpoints;
   readonly webhooks: Webhooks;
+  readonly balances: Balances;
+  readonly ledger: Ledger;
 
   constructor(options: PayCoinProOptions) {
-    const client = new APIClient(options);
-    this.invoices = new Invoices(client);
-    this.depositAddresses = new DepositAddresses(client);
-    this.deposits = new Deposits(client);
+    if (!options.apiKey) {
+      throw new Error('apiKey is required (ck_test_… or ck_live_…)');
+    }
+
+    const client = new APIClient({
+      credential: options.apiKey,
+      baseURL: options.baseURL,
+      timeout: options.timeout,
+      debug: options.debug,
+      fetch: options.fetch,
+      defaultHeaders: options.defaultHeaders,
+    });
+
     this.assets = new Assets(client);
+    this.invoices = new Invoices(client);
+    this.checkouts = new Checkouts(client);
+    this.webhookEndpoints = new WebhookEndpoints(client);
     this.webhooks = new Webhooks();
+    this.balances = new Balances(client);
+    this.ledger = new Ledger(client);
   }
 }
 
