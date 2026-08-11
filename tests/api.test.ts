@@ -1,101 +1,114 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { APIClient } from '../src/lib/api.js';
-import { APIError, AuthenticationError, TimeoutError } from '../src/lib/errors.js';
+import { PayCoinProAPIError, TimeoutError } from '../src/lib/errors.js';
 
-describe('APIClient', () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+function stubFetch(response: { status?: number; body?: unknown }): {
+  fetch: typeof fetch;
+  calls: Array<{ url: string; init: RequestInit }>;
+} {
+  const calls: Array<{ url: string; init: RequestInit }> = [];
+  const fetchImpl = (async (url: string, init: RequestInit) => {
+    calls.push({ url, init });
+    return {
+      ok: (response.status ?? 200) < 400,
+      status: response.status ?? 200,
+      json: async () => response.body ?? {},
+    };
+  }) as unknown as typeof fetch;
+  return { fetch: fetchImpl, calls };
+}
 
-  beforeEach(() => {
-    mockFetch = vi.fn();
+const client = (fetchImpl: typeof fetch) =>
+  new APIClient({ credential: 'ck_test_abc', fetch: fetchImpl });
+
+describe('URL building', () => {
+  it('appends /api/v2 to the configured origin', async () => {
+    const { fetch, calls } = stubFetch({ body: { assets: [] } });
+    await client(fetch).get('/assets');
+    expect(calls[0].url).toBe('https://paycoinpro.com/api/v2/assets');
   });
 
-  const createClient = (options = {}) => {
-    return new APIClient({
-      apiKey: 'pk_test_123',
-      fetch: mockFetch,
-      ...options,
+  it('does not double the /api/v2 segment when the origin already carries it', async () => {
+    const { fetch, calls } = stubFetch({ body: { assets: [] } });
+    const c = new APIClient({
+      credential: 'ck_test_abc',
+      baseURL: 'https://paycoinpro.com/api/v2',
+      fetch,
     });
-  };
-
-  it('should throw error when API key is missing', () => {
-    expect(() => new APIClient({ apiKey: '', fetch: mockFetch })).toThrow('API key is required');
+    await c.get('/assets');
+    expect(calls[0].url).toBe('https://paycoinpro.com/api/v2/assets');
   });
 
-  it('should make GET request with correct headers', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ id: '123' }),
-    });
-
-    const client = createClient();
-    const result = await client.get('/invoices/123');
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/invoices/123'),
-      expect.objectContaining({
-        method: 'GET',
-        headers: expect.objectContaining({
-          Authorization: 'Bearer pk_test_123',
-        }),
-      })
-    );
-    expect(result).toEqual({ id: '123' });
+  it('serializes query params and drops undefined ones', async () => {
+    const { fetch, calls } = stubFetch({ body: {} });
+    await client(fetch).get('/invoices', { limit: 50, status: undefined, after: 'cur_1' });
+    expect(calls[0].url).toBe('https://paycoinpro.com/api/v2/invoices?limit=50&after=cur_1');
   });
+});
 
-  it('should make POST request with body', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ id: 'inv_123' }),
-    });
-
-    const client = createClient();
-    await client.post('/invoices', { amount: 100 });
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ amount: 100 }),
-      })
+describe('headers', () => {
+  it('sends the credential as a bearer token', async () => {
+    const { fetch, calls } = stubFetch({ body: {} });
+    await client(fetch).get('/assets');
+    expect((calls[0].init.headers as Record<string, string>).Authorization).toBe(
+      'Bearer ck_test_abc'
     );
   });
 
-  it('should throw AuthenticationError for 401', async () => {
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 401,
-      json: () => Promise.resolve({ error: { code: 'invalid_key', message: 'Invalid API key' } }),
+  it('sends Idempotency-Key on mutations', async () => {
+    const { fetch, calls } = stubFetch({ status: 201, body: {} });
+    await client(fetch).post('/invoices', { fiatAmount: '5000' }, { idempotencyKey: 'invoice:42' });
+    expect((calls[0].init.headers as Record<string, string>)['Idempotency-Key']).toBe('invoice:42');
+  });
+
+  it('rejects a mutation with a blank idempotency key before making a request', async () => {
+    const { fetch, calls } = stubFetch({ body: {} });
+    await expect(client(fetch).post('/invoices', {}, { idempotencyKey: '   ' })).rejects.toThrow(
+      /idempotencyKey/
+    );
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe('error mapping', () => {
+  it('maps a non-2xx response to PayCoinProAPIError', async () => {
+    const { fetch } = stubFetch({
+      status: 409,
+      body: {
+        code: 'PEV2_ORDER_ID_CONFLICT',
+        message: 'order already used',
+        requestId: 'req_zzz11111',
+      },
     });
-
-    const client = createClient({ maxRetries: 0 });
-    await expect(client.get('/invoices')).rejects.toThrow(AuthenticationError);
+    await expect(client(fetch).get('/invoices')).rejects.toMatchObject({
+      name: 'PayCoinProAPIError',
+      code: 'PEV2_ORDER_ID_CONFLICT',
+      requestId: 'req_zzz11111',
+      retryable: false,
+    });
   });
 
-  it('should throw TimeoutError on abort', async () => {
-    const abortError = new Error('aborted');
-    abortError.name = 'AbortError';
-    mockFetch.mockRejectedValue(abortError);
-
-    const client = createClient({ maxRetries: 0 });
-    await expect(client.get('/invoices')).rejects.toThrow(TimeoutError);
+  it('maps an abort to TimeoutError', async () => {
+    const abort = (async () => {
+      const error = new Error('aborted');
+      error.name = 'AbortError';
+      throw error;
+    }) as unknown as typeof fetch;
+    await expect(client(abort).get('/assets')).rejects.toBeInstanceOf(TimeoutError);
   });
 
-  it('should retry on 500 error', async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: () => Promise.resolve({ error: { message: 'Server error' } }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ id: '123' }),
-      });
+  it('never retries automatically', async () => {
+    const { fetch, calls } = stubFetch({
+      status: 500,
+      body: { code: 'PEV2_INTERNAL', message: 'boom', requestId: 'req_aaa11111' },
+    });
+    await expect(client(fetch).get('/assets')).rejects.toBeInstanceOf(PayCoinProAPIError);
+    expect(calls).toHaveLength(1);
+  });
+});
 
-    const client = createClient({ maxRetries: 1 });
-    const result = await client.get('/invoices/123');
-
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-    expect(result).toEqual({ id: '123' });
+describe('construction', () => {
+  it('rejects a missing credential', () => {
+    expect(() => new APIClient({ credential: '' })).toThrow(/credential/i);
   });
 });

@@ -1,46 +1,74 @@
 /**
- * PayCoinPro HTTP Client
+ * PayCoinPro HTTP client for Payment Engine V2.
+ *
+ * Deliberately does not retry. Retrying a mutation is only safe with the
+ * caller's stable idempotency key, so that decision belongs to the caller;
+ * `error.retryable` tells them whether it is worth attempting.
  */
 
-import type { PayCoinProOptions, RequestOptions } from '../types/index.js';
-import { APIError, TimeoutError, ConnectionError } from './errors.js';
+import type { MutationOptions, RequestOptions } from '../types/index.js';
+import { ConnectionError, PayCoinProAPIError, TimeoutError } from './errors.js';
 
-const DEFAULT_BASE_URL = 'https://paycoinpro.com/api/v1';
-const DEFAULT_TIMEOUT = 30000;
-const DEFAULT_MAX_RETRIES = 0;
+const DEFAULT_BASE_URL = 'https://paycoinpro.com';
+const DEFAULT_TIMEOUT = 30_000;
+const API_PREFIX = '/api/v2';
 
-type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export interface APIClientOptions {
+  /** `ck_*` merchant key or `pc_*` payout credential. */
+  credential: string;
+  baseURL?: string;
+  timeout?: number;
+  debug?: boolean;
+  fetch?: typeof fetch;
+  defaultHeaders?: Record<string, string>;
+}
+
+type HTTPMethod = 'GET' | 'POST' | 'PATCH';
 
 export class APIClient {
-  private readonly apiKey: string;
-  private readonly baseURL: string;
+  private readonly credential: string;
+  private readonly origin: string;
   private readonly timeout: number;
-  private readonly maxRetries: number;
   private readonly debug: boolean;
+  private readonly defaultHeaders: Record<string, string>;
   private readonly _fetch: typeof fetch;
 
-  constructor(options: PayCoinProOptions) {
-    if (!options.apiKey) {
-      throw new Error('API key is required');
+  constructor(options: APIClientOptions) {
+    if (!options.credential) {
+      throw new Error('A credential is required (ck_* merchant key or pc_* payout credential)');
     }
-    this.apiKey = options.apiKey;
-    this.baseURL = options.baseURL ?? DEFAULT_BASE_URL;
+    this.credential = options.credential;
+    this.origin = (options.baseURL ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
     this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
-    this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
     this.debug = options.debug ?? false;
+    this.defaultHeaders = options.defaultHeaders ?? {};
     this._fetch = options.fetch ?? globalThis.fetch;
   }
 
-  async get<T>(
-    path: string,
-    params?: Record<string, unknown>,
-    options?: RequestOptions
-  ): Promise<T> {
+  get<T>(path: string, params?: Record<string, unknown>, options?: RequestOptions): Promise<T> {
     return this.request<T>('GET', path, undefined, params, options);
   }
 
-  async post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
+  // `async` so a failed guard surfaces as a rejected promise rather than a
+  // synchronous throw — callers await these, and a sync throw escapes `.catch()`.
+  async post<T>(path: string, body: unknown, options: MutationOptions): Promise<T> {
+    this.assertIdempotencyKey(options);
     return this.request<T>('POST', path, body, undefined, options);
+  }
+
+  async patch<T>(path: string, body: unknown, options: MutationOptions): Promise<T> {
+    this.assertIdempotencyKey(options);
+    return this.request<T>('PATCH', path, body, undefined, options);
+  }
+
+  private assertIdempotencyKey(options: MutationOptions): void {
+    if (!options?.idempotencyKey?.trim()) {
+      throw new Error(
+        'idempotencyKey is required for mutations. It must be stable across retries ' +
+          'of the same logical operation and persisted with the record it belongs to. ' +
+          'See idempotencyKeyFor().'
+      );
+    }
   }
 
   private async request<T>(
@@ -48,51 +76,24 @@ export class APIClient {
     path: string,
     body?: unknown,
     params?: Record<string, unknown>,
-    options?: RequestOptions
+    options?: RequestOptions & { idempotencyKey?: string; totp?: string }
   ): Promise<T> {
     const url = this.buildURL(path, params);
-    const maxRetries = options?.maxRetries ?? this.maxRetries;
-    let lastError: Error | undefined;
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        return await this.makeRequest<T>(method, url, body, options);
-      } catch (error) {
-        lastError = error as Error;
-
-        if (error instanceof APIError && error.status < 500 && error.status !== 429) {
-          throw error;
-        }
-
-        if (attempt >= maxRetries) {
-          throw error;
-        }
-
-        const delay = 1000 * Math.pow(2, attempt);
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-
-    throw lastError ?? new Error('Request failed');
-  }
-
-  private async makeRequest<T>(
-    method: HTTPMethod,
-    url: string,
-    body?: unknown,
-    options?: RequestOptions
-  ): Promise<T> {
     const timeout = options?.timeout ?? this.timeout;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${this.apiKey}`,
+      Authorization: `Bearer ${this.credential}`,
+      ...this.defaultHeaders,
       ...options?.headers,
     };
+    if (options?.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
+    if (options?.totp) headers['X-Payout-2FA'] = options.totp;
 
     if (this.debug) {
+      // The credential and the TOTP are never logged.
       console.log(`[PayCoinPro] ${method} ${url}`);
     }
 
@@ -100,60 +101,43 @@ export class APIClient {
       const response = await this._fetch(url, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: options?.signal ?? controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
-      const data = await response.json();
+      let data: unknown;
+      try {
+        data = await response.json();
+      } catch {
+        data = undefined;
+      }
 
       if (!response.ok) {
-        // API returns { error: "message", code: "CODE", details: {...} }
-        throw APIError.fromResponse(response.status, {
-          message: data?.error,
-          code: data?.code,
-          details: data?.details,
-        });
+        throw PayCoinProAPIError.fromResponse(response.status, data);
       }
 
-      // API returns data directly, not wrapped in { data: ... }
       return data as T;
     } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof APIError) {
-        throw error;
-      }
+      if (error instanceof PayCoinProAPIError) throw error;
 
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new TimeoutError();
-        }
-        if (error.message.includes('fetch')) {
-          throw new ConnectionError(error.message);
-        }
+        if (error.name === 'AbortError') throw new TimeoutError();
+        throw new ConnectionError(error.message);
       }
 
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
   private buildURL(path: string, params?: Record<string, unknown>): string {
-    // Ensure baseURL ends without slash and path starts without slash for proper concatenation
-    const base = this.baseURL.replace(/\/$/, '');
-    const cleanPath = path.replace(/^\//, '');
-    const url = new URL(`${base}/${cleanPath}`);
+    const prefix = this.origin.endsWith(API_PREFIX) ? '' : API_PREFIX;
+    const url = new URL(`${this.origin}${prefix}/${path.replace(/^\//, '')}`);
 
-    if (params) {
-      for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) {
-          if (value instanceof Date) {
-            url.searchParams.set(key, value.toISOString());
-          } else {
-            url.searchParams.set(key, String(value));
-          }
-        }
+    for (const [key, value] of Object.entries(params ?? {})) {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, String(value));
       }
     }
 
