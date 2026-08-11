@@ -1,168 +1,140 @@
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { WebhookVerificationError } from '../lib/errors.js';
 
-export class WebhookVerificationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'WebhookVerificationError';
-  }
+const SIGNATURE_VERSION = 'v1';
+const DEFAULT_TOLERANCE_SECONDS = 300;
+
+export interface WebhookHeaders {
+  [name: string]: string | string[] | undefined;
 }
 
 export interface WebhookEvent {
-  event: string;
-  status: string;
-  timestamp: string;
+  /** Event type, e.g. `invoice.paid.v1`. */
+  type: string;
+  /** From X-PayCoinPro-Event-Id. Deduplicate on this — deliveries repeat. */
+  eventId: string;
   [key: string]: unknown;
 }
 
+function header(headers: WebhookHeaders, name: string): string | undefined {
+  const target = name.toLowerCase();
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === target) {
+      return Array.isArray(value) ? value[0] : value;
+    }
+  }
+  return undefined;
+}
+
+function constantTimeEquals(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a, 'hex');
+    const bufB = Buffer.from(b, 'hex');
+    return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
+
 export class Webhooks {
-  private defaultTolerance = 300; // 5 minutes
-
   /**
-   * Parse Stripe-style signature header
-   * Format: t={timestamp},v1={signature}
-   */
-  private parseHeader(header: string): { timestamp: number; signature: string } {
-    const parts = header.split(',');
-    let timestamp = 0;
-    let signature = '';
-
-    for (const part of parts) {
-      const [key, value] = part.split('=');
-      if (key === 't') {
-        timestamp = parseInt(value, 10);
-      } else if (key === 'v1') {
-        signature = value;
-      }
-    }
-
-    if (!timestamp || !signature) {
-      throw new WebhookVerificationError(
-        'Invalid signature header format. Expected: t={timestamp},v1={signature}'
-      );
-    }
-
-    return { timestamp, signature };
-  }
-
-  /**
-   * Timing-safe string comparison
-   */
-  private secureCompare(a: string, b: string): boolean {
-    try {
-      const bufA = Buffer.from(a, 'hex');
-      const bufB = Buffer.from(b, 'hex');
-
-      if (bufA.length !== bufB.length) {
-        return false;
-      }
-
-      return timingSafeEqual(bufA, bufB);
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Verify webhook signature and parse event.
+   * Verify a delivery and return the parsed event.
    *
-   * @param rawBody - Raw request body as STRING (not parsed JSON object)
-   * @param signatureHeader - Value of X-Webhook-Signature header
-   * @param secret - Your webhook secret from PayCoinPro dashboard
-   * @param toleranceSeconds - Max webhook age in seconds (default: 300)
-   * @returns Parsed webhook event
-   * @throws WebhookVerificationError if verification fails
+   * @param rawBody Exact request body as a string, before any JSON parsing.
+   * @param headers The request headers; matched case-insensitively.
+   * @param secret The endpoint secret returned once at creation or rotation.
+   * @param toleranceSeconds Maximum accepted clock skew. Default 300.
    *
-   * @example
-   * ```typescript
-   * // Express with raw body
-   * app.post('/webhooks', express.raw({ type: 'application/json' }), (req, res) => {
-   *   const rawBody = req.body.toString('utf8');
-   *   const signature = req.headers['x-webhook-signature'] as string;
-   *
-   *   try {
-   *     const event = client.webhooks.verify(rawBody, signature, process.env.WEBHOOK_SECRET);
-   *
-   *     if (event.event === 'invoice') {
-   *       // Handle invoice event
-   *     } else if (event.event === 'deposit') {
-   *       // Handle deposit event
-   *     }
-   *
-   *     res.json({ received: true });
-   *   } catch (error) {
-   *     res.status(401).json({ error: error.message });
-   *   }
+   * @example Fastify
+   * ```ts
+   * fastify.post('/webhooks', async (request, reply) => {
+   *   const event = client.webhooks.verify(request.rawBody, request.headers, SECRET);
+   *   if (await alreadyProcessed(event.eventId)) return reply.send('OK');
+   *   await handle(event);
+   *   return reply.send('OK');
    * });
    * ```
    */
   verify(
     rawBody: string,
-    signatureHeader: string,
+    headers: WebhookHeaders,
     secret: string,
-    toleranceSeconds?: number
+    toleranceSeconds: number = DEFAULT_TOLERANCE_SECONDS
   ): WebhookEvent {
-    if (!signatureHeader) {
-      throw new WebhookVerificationError('Missing webhook signature header');
+    if (typeof rawBody !== 'string') {
+      throw new WebhookVerificationError(
+        'Raw body must be a string. Do not pass a parsed JSON object — the signature ' +
+          'covers the exact bytes received.'
+      );
     }
-
     if (!secret) {
       throw new WebhookVerificationError('Missing webhook secret');
     }
 
-    if (typeof rawBody !== 'string') {
+    const signatureHeader = header(headers, 'X-PayCoinPro-Signature');
+    const timestampHeader = header(headers, 'X-PayCoinPro-Timestamp');
+    const eventId = header(headers, 'X-PayCoinPro-Event-Id');
+
+    if (!signatureHeader) {
+      throw new WebhookVerificationError('Missing X-PayCoinPro-Signature header');
+    }
+    if (!timestampHeader) {
+      throw new WebhookVerificationError('Missing X-PayCoinPro-Timestamp header');
+    }
+
+    const timestamp = Number(timestampHeader);
+    if (!Number.isInteger(timestamp) || timestamp <= 0) {
+      throw new WebhookVerificationError(`Invalid timestamp header: ${timestampHeader}`);
+    }
+
+    const age = Math.floor(Date.now() / 1000) - timestamp;
+    if (age > toleranceSeconds) {
       throw new WebhookVerificationError(
-        'Raw body must be a string. Do not pass parsed JSON object.'
+        `Webhook timestamp too old. Age ${age}s exceeds tolerance ${toleranceSeconds}s.`
+      );
+    }
+    if (age < -toleranceSeconds) {
+      throw new WebhookVerificationError(
+        'Webhook timestamp is in the future. Check the server clock.'
       );
     }
 
-    // Parse the signature header
-    const { timestamp, signature } = this.parseHeader(signatureHeader);
+    const expected = createHmac('sha256', secret)
+      .update(`${timestamp}.${rawBody}`, 'utf8')
+      .digest('hex');
 
-    // Replay protection - check timestamp tolerance
-    const tolerance = toleranceSeconds ?? this.defaultTolerance;
-    const now = Math.floor(Date.now() / 1000);
-    const age = now - timestamp;
+    // The header carries up to two signatures during a secret rotation
+    // overlap. Accept if either matches.
+    const candidates = signatureHeader
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part.startsWith(`${SIGNATURE_VERSION}=`))
+      .map((part) => part.slice(SIGNATURE_VERSION.length + 1));
 
-    if (age > tolerance) {
+    if (candidates.length === 0) {
       throw new WebhookVerificationError(
-        `Webhook timestamp too old. Age: ${age}s, Tolerance: ${tolerance}s`
+        `No ${SIGNATURE_VERSION} signature found in X-PayCoinPro-Signature`
       );
     }
-
-    if (age < -tolerance) {
-      throw new WebhookVerificationError(`Webhook timestamp is in the future. Check server clock.`);
-    }
-
-    // Reconstruct the signed payload and compute expected signature
-    const signedPayload = `${timestamp}.${rawBody}`;
-    const expected = createHmac('sha256', secret).update(signedPayload).digest('hex');
-
-    // Timing-safe comparison
-    if (!this.secureCompare(signature, expected)) {
+    if (!candidates.some((candidate) => constantTimeEquals(candidate, expected))) {
       throw new WebhookVerificationError('Invalid webhook signature');
     }
 
-    // Parse and return the event
+    let parsed: Record<string, unknown>;
     try {
-      return JSON.parse(rawBody) as WebhookEvent;
+      parsed = JSON.parse(rawBody) as Record<string, unknown>;
     } catch {
       throw new WebhookVerificationError('Invalid JSON in webhook body');
     }
+
+    return { ...parsed, eventId: eventId ?? '' } as WebhookEvent;
   }
 
-  /**
-   * Generate signature for testing purposes.
-   *
-   * @param payload - JSON payload object
-   * @param secret - Webhook secret
-   * @param timestamp - Unix timestamp (optional, defaults to now)
-   * @returns Signature header value (t={timestamp},v1={signature})
-   */
-  sign(payload: object, secret: string, timestamp?: number): string {
-    const ts = timestamp ?? Math.floor(Date.now() / 1000);
-    const body = JSON.stringify(payload);
-    const signedPayload = `${ts}.${body}`;
-    const signature = createHmac('sha256', secret).update(signedPayload).digest('hex');
-    return `t=${ts},v1=${signature}`;
+  /** Produce a signature header. For tests and local fixtures only. */
+  sign(rawBody: string, secret: string, timestamp: number): string {
+    const signature = createHmac('sha256', secret)
+      .update(`${timestamp}.${rawBody}`, 'utf8')
+      .digest('hex');
+    return `${SIGNATURE_VERSION}=${signature}`;
   }
 }
