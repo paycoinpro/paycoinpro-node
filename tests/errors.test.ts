@@ -1,43 +1,73 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
+  PayCoinProAPIError,
   PayCoinProError,
-  APIError,
-  BadRequestError,
-  AuthenticationError,
-  NotFoundError,
-  RateLimitError,
   TimeoutError,
   ConnectionError,
 } from '../src/lib/errors.js';
 
-describe('Errors', () => {
-  it('should create PayCoinProError', () => {
-    const error = new PayCoinProError('Test error');
-    expect(error.message).toBe('Test error');
-    expect(error.name).toBe('PayCoinProError');
-  });
+const envelope = (code: string) => ({
+  code,
+  message: 'boom',
+  requestId: 'req_abc12345',
+  details: [{ path: 'fiatAmount', code: 'invalid', message: 'bad' }],
+});
 
-  it('should create APIError with status and code', () => {
-    const error = new APIError('Bad request', 400, 'bad_request');
+describe('PayCoinProAPIError.fromResponse', () => {
+  it('carries code, message, requestId and details', () => {
+    const error = PayCoinProAPIError.fromResponse(400, envelope('PEV2_VALIDATION_ERROR'));
+    expect(error).toBeInstanceOf(PayCoinProError);
     expect(error.status).toBe(400);
-    expect(error.code).toBe('bad_request');
+    expect(error.code).toBe('PEV2_VALIDATION_ERROR');
+    expect(error.requestId).toBe('req_abc12345');
+    expect(error.details).toHaveLength(1);
   });
 
-  it('should create correct error type from status code', () => {
-    expect(APIError.fromResponse(400)).toBeInstanceOf(BadRequestError);
-    expect(APIError.fromResponse(401)).toBeInstanceOf(AuthenticationError);
-    expect(APIError.fromResponse(404)).toBeInstanceOf(NotFoundError);
-    expect(APIError.fromResponse(429)).toBeInstanceOf(RateLimitError);
-    expect(APIError.fromResponse(500)).toBeInstanceOf(APIError);
+  it('includes the request id in the message so it can be quoted in support', () => {
+    const error = PayCoinProAPIError.fromResponse(400, envelope('PEV2_VALIDATION_ERROR'));
+    expect(error.message).toContain('req_abc12345');
   });
 
-  it('should create TimeoutError', () => {
-    const error = new TimeoutError();
-    expect(error.message).toBe('Request timed out');
+  it('marks rate limiting and internal errors retryable', () => {
+    expect(PayCoinProAPIError.fromResponse(429, envelope('PEV2_RATE_LIMITED')).retryable).toBe(true);
+    expect(PayCoinProAPIError.fromResponse(500, envelope('PEV2_INTERNAL')).retryable).toBe(true);
   });
 
-  it('should create ConnectionError', () => {
-    const error = new ConnectionError();
-    expect(error.message).toBe('Connection failed');
+  it('marks validation and conflict errors not retryable', () => {
+    expect(PayCoinProAPIError.fromResponse(400, envelope('PEV2_VALIDATION_ERROR')).retryable).toBe(
+      false
+    );
+    expect(
+      PayCoinProAPIError.fromResponse(409, envelope('PEV2_IDEMPOTENCY_CONFLICT')).retryable
+    ).toBe(false);
+    expect(PayCoinProAPIError.fromResponse(409, envelope('PEV2_ORDER_ID_CONFLICT')).retryable).toBe(
+      false
+    );
+    expect(PayCoinProAPIError.fromResponse(409, envelope('PEV2_INVALID_TRANSITION')).retryable).toBe(
+      false
+    );
+    expect(PayCoinProAPIError.fromResponse(422, envelope('PEV2_QUOTE_EXPIRED')).retryable).toBe(
+      false
+    );
+  });
+
+  it('treats the kill switch as retryable — the pause is temporary', () => {
+    expect(
+      PayCoinProAPIError.fromResponse(503, envelope('PEV2_KILL_SWITCH_ACTIVE')).retryable
+    ).toBe(true);
+  });
+
+  it('survives a non-conforming body without throwing', () => {
+    const error = PayCoinProAPIError.fromResponse(502, undefined);
+    expect(error.status).toBe(502);
+    expect(error.code).toBe('PEV2_INTERNAL');
+    expect(error.retryable).toBe(true);
+  });
+});
+
+describe('transport errors', () => {
+  it('are retryable', () => {
+    expect(new TimeoutError().retryable).toBe(true);
+    expect(new ConnectionError('socket hang up').retryable).toBe(true);
   });
 });
