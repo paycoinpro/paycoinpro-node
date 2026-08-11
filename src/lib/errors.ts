@@ -13,21 +13,24 @@ export class PayCoinProError extends Error {
 export class APIError extends PayCoinProError {
   readonly status: number;
   readonly code: string;
+  readonly details?: unknown;
 
-  constructor(message: string, status: number, code: string = 'api_error') {
+  constructor(message: string, status: number, code: string = 'api_error', details?: unknown) {
     super(message);
     this.name = 'APIError';
     this.status = status;
     this.code = code;
+    this.details = details;
   }
 
-  static fromResponse(status: number, error?: { code: string; message: string }): APIError {
+  static fromResponse(status: number, error?: { code?: string; message?: string; details?: unknown }): APIError {
     const message = error?.message ?? `Request failed with status ${status}`;
     const code = error?.code ?? 'unknown_error';
+    const details = error?.details;
 
     switch (status) {
       case 400:
-        return new BadRequestError(message, code);
+        return new BadRequestError(message, code, details);
       case 401:
         return new AuthenticationError(message, code);
       case 404:
@@ -35,14 +38,14 @@ export class APIError extends PayCoinProError {
       case 429:
         return new RateLimitError(message, code);
       default:
-        return new APIError(message, status, code);
+        return new APIError(message, status, code, details);
     }
   }
 }
 
 export class BadRequestError extends APIError {
-  constructor(message: string, code: string = 'bad_request') {
-    super(message, 400, code);
+  constructor(message: string, code: string = 'bad_request', details?: unknown) {
+    super(message, 400, code, details);
     this.name = 'BadRequestError';
   }
 }

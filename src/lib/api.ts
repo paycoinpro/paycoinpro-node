@@ -109,7 +109,12 @@ export class APIClient {
       const data = await response.json();
 
       if (!response.ok) {
-        throw APIError.fromResponse(response.status, data?.error);
+        // API returns { error: "message", code: "CODE", details: {...} }
+        throw APIError.fromResponse(response.status, {
+          message: data?.error,
+          code: data?.code,
+          details: data?.details,
+        });
       }
 
       // API returns data directly, not wrapped in { data: ... }
