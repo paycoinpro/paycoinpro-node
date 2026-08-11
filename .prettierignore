@@ -2,3 +2,6 @@ dist
 node_modules
 coverage
 *.md
+
+# Generated from the OpenAPI document by `npm run generate`
+src/types/openapi.ts

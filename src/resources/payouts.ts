@@ -77,7 +77,11 @@ export class Payouts {
   }
 
   /** Cancel a payout before signing. `reason` is required by the API. */
-  cancel(id: string, params: CancelPayoutRequest, options: MutationOptions): Promise<PayoutResource> {
+  cancel(
+    id: string,
+    params: CancelPayoutRequest,
+    options: MutationOptions
+  ): Promise<PayoutResource> {
     return this.client.post<PayoutResource>(
       `/payouts/${encodeURIComponent(id)}/cancel`,
       params,

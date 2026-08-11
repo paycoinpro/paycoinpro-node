@@ -1,50 +1,54 @@
-import { PayCoinPro } from 'paycoinpro';
+/**
+ * PayCoinPro V2 — end-to-end example.
+ *
+ * Run: PAYCOINPRO_API_KEY=ck_test_… npx tsx example.ts
+ */
 
-const client = new PayCoinPro({
-  apiKey: 'pk_live_your_api_key',
-});
+import { PayCoinPro, formatAmount, idempotencyKeyFor, PayCoinProAPIError } from './src/index.js';
+
+const client = new PayCoinPro({ apiKey: process.env.PAYCOINPRO_API_KEY! });
 
 async function main() {
+  const { assets } = await client.assets.list();
+  console.log(`${assets.length} asset/network pairs available`);
 
-  // Assets List
-  const assets = await client.assets.list();
-  console.log('Assets:', assets.assets);
+  const orderId = `demo_${process.pid}`;
 
-  // Create an invoice
-  const invoice = await client.invoices.create({
-    amount: 99.99,
-    orderId: 'ORD-123',
-    callbackUrl: 'https://yoursite.com/webhooks',
-  });
-  console.log('Invoice created:', invoice.id);
-  console.log('Payment URL:', invoice.paymentUrl);
+  // 500 minor units of USD = $5.00. Always an exact integer string.
+  const invoice = await client.invoices.create(
+    { fiatAmount: '500', currency: 'USD', orderId },
+    { idempotencyKey: idempotencyKeyFor('invoice', orderId) }
+  );
+  console.log(`invoice ${invoice.id} — ${invoice.status}`);
 
-  // Get invoice
-  const fetched = await client.invoices.retrieve(invoice.id);
-  console.log('Invoice status:', fetched.status);
+  const usdt = assets.find((a) => a.asset === 'USDT' && a.receivingSupported);
+  if (!usdt) throw new Error('No USDT network is currently enabled');
 
-  // List invoices
-  const invoices = await client.invoices.list({ limit: 10 });
-  console.log('Total invoices:', invoices.invoices.length);
+  const quoted = await client.invoices.selectPaymentMethod(
+    invoice.id,
+    { asset: usdt.asset, network: usdt.network },
+    { idempotencyKey: idempotencyKeyFor('select', orderId) }
+  );
 
-  // Create deposit address
-  const address = await client.depositAddresses.create({
-    asset: 'usdt',
-    network: 'bsc',
-    externalUserId: 'user_123',
-  });
-  console.log('Deposit address:', address.address);
+  console.log(
+    `send exactly ${quoted.cryptoDue?.amountDisplay} ${usdt.asset} on ${usdt.networkName}`
+  );
+  console.log(`status: ${quoted.status}`);
 
-  // List deposits
-  const deposits = await client.deposits.list();
-  console.log('Deposits:', deposits.deposits.length);
-
-  // List available assets
-  const assetsResponse = await client.assets.list();
-  console.log('Available assets:', assetsResponse.assets.length);
-  for (const asset of assetsResponse.assets) {
-    console.log(`- ${asset.symbol} (${asset.name})`);
+  const { balances } = await client.balances.retrieve();
+  for (const balance of balances) {
+    // amountDisplay is already formatted; formatAmount does the same from the
+    // raw integer string when you need it.
+    const available = formatAmount(balance.available.amount, balance.available.decimals);
+    console.log(`${balance.asset} on ${balance.network}: ${available}`);
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  if (error instanceof PayCoinProAPIError) {
+    console.error(`${error.code} (${error.requestId}): ${error.message}`);
+    process.exitCode = 1;
+    return;
+  }
+  throw error;
+});
